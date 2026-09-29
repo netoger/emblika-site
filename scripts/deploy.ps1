@@ -12,7 +12,8 @@ Set-Location (Split-Path $PSScriptRoot -Parent)
 
 function Step($t){Write-Host "`n== $t" -ForegroundColor Green}
 function Check($what){if($LASTEXITCODE -ne 0){throw "Ошибка: $what (код $LASTEXITCODE). Выкладка остановлена."}}
-function Remote($script){($script -replace "`r",'') | ssh $Host_ 'bash -s';Check 'команда на сервере'}
+# Скрипт передаём в base64: конвейер PowerShell 5.1 дописывает BOM в начало, и bash не узнаёт первую команду.
+function Remote($script){$b64=[Convert]::ToBase64String((New-Object System.Text.UTF8Encoding $false).GetBytes(($script -replace "`r",'')));ssh $Host_ "echo $b64 | base64 -d | bash";Check 'команда на сервере'}
 
 Step 'Сборка'
 npm run build;Check 'npm run build'
@@ -31,7 +32,7 @@ if [ -f public_html/app/data/emblika.sqlite ]; then
   php -r '$s=new SQLite3($argv[1],SQLITE3_OPEN_READONLY);$d=new SQLite3($argv[2]);if(!$s->backup($d))exit(1);' public_html/app/data/emblika.sqlite ~/backups/emblema-db-$stamp.sqlite
 fi
 chmod 600 ~/backups/emblema-*-$stamp.*
-ls -la ~/backups | tail -3
+ls -la ~/backups | tail -n 3
 '@
 
  Step 'Передача архива'
