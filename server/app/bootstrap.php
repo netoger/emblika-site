@@ -2,7 +2,7 @@
 declare(strict_types=1);
 date_default_timezone_set('Europe/Moscow');
 ini_set('display_errors', '0');
-const CONSENT_VERSION = 'demo-2026-09-26';
+const CONSENT_VERSION = 'demo-2026-09-29';
 const RETENTION_DAYS = 30;
 function env_config(): array {
     static $config;
@@ -16,6 +16,9 @@ function db(): PDO {
     $db = new PDO('sqlite:'.__DIR__.'/data/emblika.sqlite');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $db->exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;');
+    // Заявки добавлены после первой установки: таблица создаётся и на уже работающей базе.
+    $db->exec("CREATE TABLE IF NOT EXISTS leads(id INTEGER PRIMARY KEY,reference TEXT NOT NULL UNIQUE,request_id TEXT NOT NULL UNIQUE,type TEXT NOT NULL,topic TEXT NOT NULL,name TEXT NOT NULL,phone TEXT NOT NULL,comment TEXT NOT NULL DEFAULT '',status TEXT NOT NULL DEFAULT 'new',consent_at INTEGER NOT NULL,consent_ip TEXT NOT NULL,consent_version TEXT NOT NULL,created_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS leads_created ON leads(created_at);");
     return $db;
 }
 function query(string $sql, array $args=[]): PDOStatement { $q=db()->prepare($sql); $q->execute($args); return $q; }
@@ -48,9 +51,11 @@ function limited(string $scope, int $limit, int $seconds): void {
         db()->exec('COMMIT');
     } catch(Throwable $e) {db()->exec('ROLLBACK');throw $e;}
 }
+function clean_text(string $s): string { return trim(preg_replace('/[\x00-\x1F\x7F]+/u',' ',$s) ?? ''); }
 function valid_date(string $s): bool { $d=DateTimeImmutable::createFromFormat('!Y-m-d',$s);return $d && $d->format('Y-m-d')===$s; }
 function cleanup(): void {
     query('DELETE FROM appointments WHERE created_at < ?', [time()-RETENTION_DAYS*86400]);
+    query('DELETE FROM leads WHERE created_at < ?', [time()-RETENTION_DAYS*86400]);
     query('DELETE FROM shifts WHERE date < ?', [date('Y-m-d',time()-RETENTION_DAYS*86400)]);
     query('DELETE FROM attempts WHERE created_at < ?', [time()-86400]);
 }

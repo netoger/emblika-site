@@ -69,6 +69,20 @@ check(created[0]==201,'Освободившееся окно можно заня
 check(guest.call('book',retry)[1]['reference']==created[1]['reference'],'Повтор отправки не создаёт дубль')
 check(admin.call('status',{'id':record['id'],'status':'confirmed'})[0]==409,'Отменённую запись нельзя восстановить поверх другой')
 check(admin.call('service',{'id':service['id'],'name':service['name'],'price':service['price'],'duration':service['duration'],'active':True})[0]==200,'Сохранение услуги')
+lead={'type':'training','topic':'Оформление бровей','name':'Тест API','phone':'70000000000','comment':'Проверка','consent':True,'demoConsent':True,'requestId':str(uuid.uuid4())}
+check(guest.call('lead',{**lead,'consent':False})[0]==400,'Заявка: сервер проверяет согласие')
+check(guest.call('lead',{**lead,'type':'spam'})[0]==400,'Заявка: неизвестный тип отклонён')
+check(guest.call('lead',{**lead,'phone':'123'})[0]==400,'Заявка: сервер проверяет телефон')
+check(guest.call('lead',lead,False)[0]==403,'Заявка без CSRF отклонена')
+sent=guest.call('lead',lead)
+check(sent[0]==201 and sent[1]['reference'].startswith('ОБ-'),'Заявка на обучение сохранена')
+check(guest.call('lead',lead)[1]['reference']==sent[1]['reference'],'Повтор отправки заявки не создаёт дубль')
+check(guest.call('lead',{**lead,'type':'client','topic':'Помочь выбрать услугу','requestId':str(uuid.uuid4())})[0]==201,'Заявка клиента сохранена')
+leads=[l for l in admin.call('dashboard')[1]['leads'] if l['name']=='Тест API']
+check(len(leads)==2,'Заявки видны в кабинете')
+check(admin.call('lead_status',{'id':leads[0]['id'],'status':'contacted'})[0]==200,'Смена статуса заявки')
+check(admin.call('lead_status',{'id':leads[0]['id'],'status':'bad'})[0]==400,'Неизвестный статус заявки отклонён')
+for l in leads:check(admin.call('lead_delete',{'id':l['id']})[0]==200,'Удалена синтетическая заявка')
 for a in admin.call('dashboard')[1]['appointments']:
     if a['name']=='Тест API':check(admin.call('delete',{'id':a['id']})[0]==200,'Удалена синтетическая тестовая запись')
 check(admin.call('logout',{})[0]==200 and admin.call('dashboard')[0]==401,'Выход закрывает доступ')
