@@ -57,12 +57,18 @@ guest=Client();admin=Client()
 check(guest.call('dashboard')[0]==401,'Кабинет недоступен без авторизации')
 check(guest.call('book',{},False)[0]==403,'POST без CSRF отклонён')
 catalog=guest.call('catalog')[1]
-service=catalog['services'][0]
+service=next(s for s in catalog['services'] if s['mode']=='booking')
 names={s['name']:s for s in catalog['services']}
-check(all(k in service for k in ('image','mode')),'Миграция: у услуг есть фото и способ записи')
-check(all(names.get(n,{}).get('mode')=='request' for n in ('Чистка лица','Пилинг','Радиочастотный (RF) лифтинг лица','Уходовые процедуры для волос','Аппаратная коррекция фигуры')),'Новые процедуры добавлены и принимаются по заявке')
+check(all(k in service for k in ('image','mode','price_from')),'Миграция: у услуг есть фото, способ записи и цена «от»')
+check(len(catalog['services'])>200,'Прайс студии перенесён (>200 услуг)')
+check('Маникюр с покрытием' not in names and 'Чистка лица' not in names,'Демо-услуги и заглушки убраны')
+check(names['Комбинированная чистка лица (УЗ + механическая)']['masters']=='[1]' and names['Стрижка каре']['masters']=='[3]','Услуги привязаны к мастерам по специальности')
+check(names['Бесплатная консультация по аппаратной коррекции фигуры']['price']==0,'Бесплатная консультация хранится с ценой 0')
+check(names['Балаяж']['price_from']==1,'Цена «от» перенесена')
+check(any(s['category']=='Комплексы' for s in catalog['services']) and any(s['category']=='Спецпредложения' for s in catalog['services']),'Комплексы и спецпредложения заполнены')
+check(all(s['mode']=='request' for s in catalog['services'] if s['category']=='Коррекция фигуры'),'Коррекция фигуры — по заявке')
 check(not any(s['category']=='Уход за лицом' for s in catalog['services']),'Раздел «Уход за лицом» переименован в косметологию')
-body_service=names['Аппаратная коррекция фигуры']
+body_service=names['Бесплатная консультация по аппаратной коррекции фигуры']
 day=(date.fromisoformat(catalog['today'])+timedelta(days=2)).isoformat()
 master=json.loads(service['masters'])[0]
 times=guest.call(f'slots&service={service["id"]}&master={master}&date={day}')[1]['times']
@@ -99,9 +105,10 @@ check(created[0]==201,'Освободившееся окно можно заня
 check(guest.call('book',retry)[1]['reference']==created[1]['reference'],'Повтор отправки не создаёт дубль')
 check(admin.call('status',{'id':record['id'],'status':'confirmed'})[0]==409,'Отменённую запись нельзя восстановить поверх другой')
 check(all(s['end_time']=='20:00' for s in dashboard['shifts']),'Смены продлены до 20:00')
-keep={'id':service['id'],'name':service['name'],'category':service['category'],'description':service['description'],'price':service['price'],'duration':service['duration'],'masters':json.loads(service['masters']),'mode':'booking','active':True}
+keep={'id':service['id'],'name':service['name'],'category':service['category'],'description':service['description'],'price':service['price'],'priceFrom':bool(service['price_from']),'duration':service['duration'],'masters':json.loads(service['masters']),'mode':'booking','active':True}
 check(admin.call('service',keep)[0]==200,'Сохранение услуги')
 check(admin.call('service',{**keep,'masters':[]})[0]==400,'Онлайн-запись без мастера отклонена')
+check(admin.call('service',{**keep,'duration':37})[0]==400,'Длительность не кратна 5 — отклонена')
 check(admin.call('service',{**keep,'masters':[999]})[0]==400,'Неизвестный мастер отклонён')
 created_service=admin.call('service',{**keep,'id':0,'name':'Тест API комплекс','category':'Комплексы','price':3000,'mode':'request','masters':[]})
 check(created_service[0]==200 and created_service[1]['id']>0,'Создание услуги в кабинете')

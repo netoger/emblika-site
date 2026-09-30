@@ -12,4 +12,7 @@ export async function upload(action, form) {
  return result;
 }
 export const money=price=>price==null?'По согласованию':new Intl.NumberFormat('ru-RU').format(price)+' ₽';
+// Цена услуги из прайса: бесплатные консультации и цены «от» — как в прайсе студии.
+export const cost=s=>s.price==null?'По согласованию':Number(s.price)===0?'Бесплатно':(Number(s.price_from)?'от ':'')+money(s.price);
+export const minutes=m=>{m=Number(m);const h=Math.floor(m/60),r=m%60;return [h&&h+' ч',r&&r+' мин'].filter(Boolean).join(' ');};
 export const dateLabel=date=>new Date(date+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'});

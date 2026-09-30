@@ -87,3 +87,7 @@
  .tr-program h3{font-size:29px}
  .tr-motto{font-size:34px}
 }
+.tr-trial{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:28px;padding:22px 26px;border-radius:var(--radius);background:var(--green-deep);color:#eef3ec}
+.tr-trial strong{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:28px;color:#fff}
+.tr-trial p{font-size:14px;color:#c9d6c8;margin-top:6px;max-width:640px}
+.tr-trial .price-book{background:#fff;border-color:#fff}

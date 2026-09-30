@@ -33,13 +33,17 @@ const NEW_SERVICES = [
 ];
 // Изменения схемы по номеру в PRAGMA user_version. Пока install.php не создал таблицы, миграции ждут:
 // установщик вызовет их сам после начального наполнения.
+const SCHEMA_VERSION = 2;
+// Демонстрационные услуги первой версии и заглушки новых процедур: версия 2 заменяет их прайсом студии.
+const DEMO_SERVICES = ['Маникюр с покрытием','Наращивание ногтей','Экспресс-педикюр','Наращивание ресниц 2,5D','Ламинирование ресниц','Оформление бровей','Уход за лицом','Женская стрижка','Мужская стрижка','Окрашивание волос','Чистка лица','Пилинг','Радиочастотный (RF) лифтинг лица','Аппаратная коррекция фигуры'];
 function migrate(PDO $db): void {
-    if ((int)$db->query('PRAGMA user_version')->fetchColumn() >= 1) return;
+    if ((int)$db->query('PRAGMA user_version')->fetchColumn() >= SCHEMA_VERSION) return;
     if (!$db->query("SELECT 1 FROM sqlite_master WHERE type='table' AND name='services'")->fetchColumn()) return;
     $db->exec('BEGIN IMMEDIATE');
     try {
         // Повторная проверка внутри блокировки: параллельный запрос мог уже выполнить миграцию.
-        if ((int)$db->query('PRAGMA user_version')->fetchColumn() < 1) {
+        $version = (int)$db->query('PRAGMA user_version')->fetchColumn();
+        if ($version < 1) {
             // Версия 1 (30.09.2026): фото и способ записи у услуг, новые направления, часы работы 10:00–20:00.
             $db->exec("ALTER TABLE services ADD COLUMN image TEXT");
             $db->exec("ALTER TABLE services ADD COLUMN mode TEXT NOT NULL DEFAULT 'booking'");
@@ -49,6 +53,23 @@ function migrate(PDO $db): void {
             foreach (NEW_SERVICES as $s) { $exists->execute([$s[0]]); if (!$exists->fetchColumn()) $add->execute($s); }
             $db->prepare("UPDATE shifts SET end_time='20:00' WHERE end_time='19:00' AND date>=?")->execute([date('Y-m-d')]);
             $db->exec('PRAGMA user_version=1');
+        }
+        if ($version < 2) {
+            // Версия 2 (30.09.2026): реальный прайс студии (catalog.php), цена «от», специальности мастеров.
+            $db->exec("ALTER TABLE services ADD COLUMN price_from INTEGER NOT NULL DEFAULT 0");
+            foreach ([1=>'Косметолог, лешмейкер, бровист', 2=>'Мастер маникюра и педикюра', 3=>'Парикмахер'] as $id=>$role)
+                $db->prepare('UPDATE masters SET role=? WHERE id=?')->execute([$role, $id]);
+            // Демо-услуги с записями нельзя удалить из-за ссылок — их только снимаем с публикации.
+            $used = $db->prepare('SELECT COUNT(*) FROM appointments WHERE service_id=?');
+            foreach ($db->query('SELECT id,name FROM services')->fetchAll(PDO::FETCH_ASSOC) as $s) {
+                if (!in_array($s['name'], DEMO_SERVICES, true)) continue;
+                $used->execute([$s['id']]);
+                $db->prepare($used->fetchColumn() ? 'UPDATE services SET active=0 WHERE id=?' : 'DELETE FROM services WHERE id=?')->execute([$s['id']]);
+            }
+            $exists = $db->prepare('SELECT COUNT(*) FROM services WHERE name=? AND active=1');
+            $add = $db->prepare('INSERT INTO services(name,category,description,price,price_from,duration,masters,mode,image) VALUES(?,?,?,?,?,?,?,?,?)');
+            foreach (require __DIR__.'/catalog.php' as $s) { $exists->execute([$s[0]]); if (!$exists->fetchColumn()) $add->execute([$s[0],$s[1],$s[2],$s[3],$s[4],$s[5],$s[6],$s[7],$s[8]?:null]); }
+            $db->exec('PRAGMA user_version=2');
         }
         $db->exec('COMMIT');
     } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }

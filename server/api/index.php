@@ -131,7 +131,8 @@ try {
     // id=0 создаёт новую услугу, иначе обновляет существующую.
     $id=(int)($input['id']??0);$name=clean_text((string)($input['name']??''));$duration=(int)($input['duration']??0);$price=$input['price']??null;
     $category=clean_text((string)($input['category']??''));$description=clean_text((string)($input['description']??''));$mode=(string)($input['mode']??'booking');
-    if(mb_strlen($name)<2 || mb_strlen($name)>100 || $duration<30 || $duration>360 || $duration%30!==0 || ($price!==null && (!is_numeric($price) || $price<0 || $price>100000)))fail('Проверьте название, цену и длительность (30–360 минут с шагом 30).');
+    // Длительность — с шагом 5 минут, как в прайсе студии; окна для записи по-прежнему начинаются каждые 30 минут.
+    if(mb_strlen($name)<2 || mb_strlen($name)>200 || $duration<5 || $duration>480 || $duration%5!==0 || ($price!==null && (!is_numeric($price) || $price<0 || $price>100000)))fail('Проверьте название, цену и длительность (5–480 минут с шагом 5).');
     if(mb_strlen($category)<2 || mb_strlen($category)>60)fail('Укажите раздел услуги.');
     if(mb_strlen($description)>400)fail('Описание — не более 400 символов.');
     if(!in_array($mode,['booking','request'],true))fail('Неизвестный способ записи.');
@@ -141,12 +142,12 @@ try {
     $known=array_map('intval',query('SELECT id FROM masters')->fetchAll(PDO::FETCH_COLUMN));
     if(array_diff($masters,$known))fail('Проверьте список мастеров.');
     if($mode==='booking' && !$masters)fail('Для онлайн-записи выберите хотя бы одного мастера.');
-    $values=[$name,$category,$description,$price===null?null:(int)$price,$duration,json_encode($masters),$mode,($input['active']??true)?1:0];
+    $values=[$name,$category,$description,$price===null?null:(int)$price,($input['priceFrom']??false)===true?1:0,$duration,json_encode($masters),$mode,($input['active']??true)?1:0];
     if($id){
        if(!query('SELECT id FROM services WHERE id=?',[$id])->fetchColumn())fail('Услуга не найдена.',404);
-       query('UPDATE services SET name=?,category=?,description=?,price=?,duration=?,masters=?,mode=?,active=? WHERE id=?',[...$values,$id]);
+       query('UPDATE services SET name=?,category=?,description=?,price=?,price_from=?,duration=?,masters=?,mode=?,active=? WHERE id=?',[...$values,$id]);
     }else{
-       query('INSERT INTO services(name,category,description,price,duration,masters,mode,active) VALUES(?,?,?,?,?,?,?,?)',$values);
+       query('INSERT INTO services(name,category,description,price,price_from,duration,masters,mode,active) VALUES(?,?,?,?,?,?,?,?,?)',$values);
        $id=(int)db()->lastInsertId();
     }
     reply(['ok'=>true,'id'=>$id]);

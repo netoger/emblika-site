@@ -144,7 +144,11 @@ h1{font-size:clamp(56px,6vw,96px);line-height:.96;letter-spacing:-.035em;margin:
 .offer-card>div:first-child{padding-top:22px}
 .offer-photo{display:block;padding:0;border:0;aspect-ratio:4/3;overflow:hidden;background:var(--sage)}
 .offer-photo+div{padding-top:0}
-.offer-card h3{font-size:30px;line-height:1.1}
+.offer-group+.offer-group{margin-top:44px}
+.offer-group>h3{font-size:30px;margin-bottom:18px}
+.offer-card h4{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:26px;line-height:1.15}
+.about-facts{list-style:none;padding:0;margin:22px 0 0;display:flex;flex-wrap:wrap;gap:8px}
+.about-facts li{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:13px}
 .offer-card p{font-size:14px;line-height:1.6;color:var(--muted);margin-top:8px}
 .offer-foot{margin-top:auto;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
 .offer-foot .price-book{margin-left:auto}

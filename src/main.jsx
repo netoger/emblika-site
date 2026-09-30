@@ -14,7 +14,7 @@ import Booking from './Booking';
 import LeadForm from './LeadForm';
 import Training from './Training';
 import Admin from './Admin';
-import {api,money} from './api';
+import {api,money,cost,minutes} from './api';
 import './extension.css';
 
 // Вкладки сайта. Адрес вида #/services работает на любом хостинге без правил перезаписи.
@@ -42,11 +42,11 @@ const messengers=[['ВКонтакте','https://vk.me/emblica','сообщен�
 const hours='Ежедневно, 10:00–20:00';
 // Категории совпадают с полем category в таблице services.
 const directions=[
- {category:'Ногти',title:'Маникюр и педикюр',image:'work-1',text:'Уход, покрытие гель-лаком, наращивание и экспресс-педикюр.'},
- {category:'Ресницы и брови',title:'Ресницы и брови',image:'work-2',text:'Наращивание и ламинирование ресниц, оформление бровей.'},
- {category:'Эстетическая косметология',title:'Косметология',image:'room',text:'Чистки, пилинги, радиочастотный лифтинг и уход за лицом.'},
- {category:'Волосы',title:'Волосы',image:'studio',text:'Стрижки, окрашивание и уходовые процедуры для волос.'},
- {category:'Коррекция фигуры',title:'Коррекция фигуры',image:'detail',text:'Аппаратные процедуры — программу подбираем на консультации.'}
+ {category:'Ногти',title:'Маникюр и педикюр',image:'work-1',text:'Маникюр, педикюр, покрытие гель-лаком, наращивание и СПА-уход.'},
+ {category:'Ресницы и брови',title:'Ресницы и брови',image:'work-2',text:'Классическое и LED-наращивание, ламинирование ресниц и бровей.'},
+ {category:'Эстетическая косметология',title:'Косметология',image:'room',text:'Чистки, пилинги, массаж и RF-лифтинг лица.'},
+ {category:'Волосы',title:'Волосы',image:'studio',text:'Стрижки, окрашивание, завивка, укладки и уход за волосами.'},
+ {category:'Коррекция фигуры',title:'Коррекция фигуры',image:'detail',text:'Аппаратные процедуры по зонам. Первая консультация — бесплатно.'}
 ];
 const bodyCategory='Коррекция фигуры';
 // Эти разделы показываются карточками в блоке «Комплексы и спецпредложения», а не строками прайса.
@@ -64,9 +64,9 @@ const values=[
  ['Растим мастеров','На базе студии проходит обучение — делимся опытом с теми, кто только начинает путь в профессии.']
 ];
 const team=[
- {id:1,name:'Полина',role:'Ресницы, брови и уход за лицом',image:'polina',text:'Оформление бровей, ламинирование и наращивание ресниц. Поможет обсудить желаемую форму и выразительность взгляда.',service:4},
- {id:2,name:'Анна',role:'Маникюр и педикюр',image:'anna',text:'Уход за ногтями, покрытие и наращивание. Сдержанный нюд, яркий цвет или новая форма — начните с ваших пожеланий.',service:1},
- {id:3,name:'Мария',role:'Парикмахер',image:'maria',text:'Женские и мужские стрижки, окрашивание волос. Обсудите длину, оттенок и то, как вы привыкли укладывать волосы.',service:8}
+ {id:1,name:'Полина',role:'Косметолог, лешмейкер, бровист',image:'polina',text:'Косметолог с медицинским образованием: подбирает процедуры и домашний уход, делает массаж лица. В наращивании ресниц — четыре года, работает и в LED-технике.',category:'Эстетическая косметология'},
+ {id:2,name:'Анна',role:'Мастер маникюра и педикюра',image:'anna',text:'Уход за ногтями, покрытие и наращивание. Сдержанный нюд, яркий цвет или новая форма — начните с ваших пожеланий.',category:'Ногти'},
+ {id:3,name:'Мария',role:'Парикмахер',image:'maria',text:'Женские, мужские и детские стрижки, окрашивание и завивка. Обсудите длину, оттенок и то, как вы привыкли укладывать волосы.',category:'Волосы'}
 ];
 const photos=[
  ['work-1','Маникюр в натуральном оттенке','tall'],
@@ -93,7 +93,7 @@ const explore=[
  ['contacts','Контакты','Адрес, часы работы, карта и ответы на вопросы перед визитом.']
 ];
 const Arrow=()=> <span aria-hidden="true">↗</span>;
-const duration=s=>s.mode==='request'?'по консультации':'≈ '+s.duration+' мин';
+const duration=s=>s.mode==='request'&&s.price==null?'по консультации':'≈ '+minutes(s.duration);
 
 function Perks({onGift}){
  return <div className="perks">{perks.map(([title,text,action])=><div className="perk" key={title}><strong>{title}</strong><p>{text}</p>{action&&<button className="text-link" onClick={onGift}>{action} →</button>}</div>)}</div>;
@@ -109,7 +109,11 @@ function App(){
  const [preset,setPreset]=useState(null);
  const first=useRef(true);
  function allow(value){setExternal(value);setCookieOpen(false);try{localStorage.setItem('emblika-external',value);}catch{}}
- useEffect(()=>{api('catalog').then(setCatalog).catch(e=>setLoadError(e.message));},[]);
+ useEffect(()=>{api('catalog').then(r=>{
+  // Порядок прайса и формы записи — как у направлений на главной; комплексы и курсы — в конце.
+  const rank=c=>{const i=directions.findIndex(d=>d.category===c);return i>=0?i:offerCategories.includes(c)?100+offerCategories.indexOf(c):50;};
+  setCatalog({...r,services:[...r.services].sort((a,b)=>rank(a.category)-rank(b.category)||a.id-b.id)});
+ }).catch(e=>setLoadError(e.message));},[]);
  useEffect(()=>{if(!gallery)return;const dialog=document.getElementById('photo-dialog');dialog?.showModal();return()=>dialog?.close();},[gallery]);
  useEffect(()=>{
   // Старый якорь или прежний адрес заменяем адресом вкладки, чтобы кнопка «Назад» работала предсказуемо.
@@ -141,7 +145,7 @@ function App(){
  }
  const ask=s=>requestLead(s.category===bodyCategory?'body':'client',s.name);
  const all=catalog?.services||[];
- const fromPrice=cat=>{const list=all.filter(s=>s.category===cat&&s.price!=null).map(s=>Number(s.price));return list.length?'от '+money(Math.min(...list)):'Цена по согласованию';};
+ const fromPrice=cat=>{const list=all.filter(s=>s.category===cat&&Number(s.price)>0).map(s=>Number(s.price));return list.length?'от '+money(Math.min(...list)):'Цена по согласованию';};
  const priced=all.filter(s=>!offerCategories.includes(s.category));
  const offers=all.filter(s=>offerCategories.includes(s.category));
  // Порядок фильтров: сначала направления студии, затем разделы, добавленные в кабинете.
@@ -152,7 +156,7 @@ function App(){
  },[catalog,category,search]);
  const withPhotos=services.some(s=>s.image);
  const clientTopics=[...new Set(['Помочь выбрать услугу',...directions.filter(d=>d.category!==bodyCategory).map(d=>d.title),giftTopic,...priced.filter(s=>s.mode==='request'&&s.category!==bodyCategory).map(s=>s.name)])];
- const bodyTopics=[...new Set(['Аппаратная коррекция фигуры',...priced.filter(s=>s.category===bodyCategory).map(s=>s.name)])];
+ const bodyTopics=['Бесплатная консультация','Живот и бока','Ноги','Ягодицы','Ягодицы и ноги','Спина','Курс из нескольких зон'];
  const presetFor=type=>preset?.type===type?preset:null;
  const nav=pages.filter(([id])=>id!=='home');
  const navLink=([id,label])=><a key={id} href={href(id)} aria-current={page===id?'page':undefined} onClick={()=>setMenu(false)}>{label}</a>;
@@ -221,23 +225,23 @@ function App(){
     {withPhotos&&(s.image?<button className="price-photo" onClick={()=>openPhoto(s.image,s.name)} aria-label={'Фото: '+s.name}><img src={s.image} alt="" loading="lazy"/></button>:<span className="price-photo empty" aria-hidden="true"/>)}
     <div className="price-name"><span className="price-cat">{s.category}</span><strong>{s.name}</strong><small>{s.description}</small></div>
     <span className="price-duration">{duration(s)}</span>
-    <span className="price-value">{money(s.price)}</span>
+    <span className="price-value">{cost(s)}</span>
     {bookButton(s)}
    </div>):<p className="price-empty">Ничего не нашли. Попробуйте другое слово или <button className="inline-link" onClick={()=>requestLead('client','Помочь выбрать услугу')}>оставьте заявку</button> — подберём процедуру.</p>}</div>
    <p className="fine">Цены — ориентиры для демонстрации. Скрытых доплат нет: итоговую стоимость и длительность мастер называет до начала процедуры.</p>
   </section>
 
   <section className="section offers" aria-labelledby="offers-title">
-   <div className="section-head"><div><div className="eyebrow">КОМПЛЕКСЫ И СПЕЦПРЕДЛОЖЕНИЯ</div><h2 id="offers-title">Выгоднее <em>вместе</em></h2></div><p>Несколько процедур за один визит и предложения студии.</p></div>
-   {offers.length?<div className="offer-grid">{offers.map(s=><article className="offer-card" key={s.id}>
+   <div className="section-head"><div><div className="eyebrow">КОМПЛЕКСЫ И СПЕЦПРЕДЛОЖЕНИЯ</div><h2 id="offers-title">Выгоднее <em>вместе</em></h2></div><p>Сочетания процедур за один визит и курсы, в которых сеанс обходится дешевле.</p></div>
+   {offers.length?offerCategories.filter(c=>offers.some(s=>s.category===c)).map(c=><div className="offer-group" key={c}><h3>{c==='Комплексы'?'Комплексы — несколько процедур за визит':'Спецпредложения — курсы по выгодной цене'}</h3><div className="offer-grid">{offers.filter(s=>s.category===c).map(s=><article className="offer-card" key={s.id}>
     {s.image&&<button className="offer-photo" onClick={()=>openPhoto(s.image,s.name)} aria-label={'Фото: '+s.name}><img src={s.image} alt="" loading="lazy"/></button>}
-    <div><span className="price-cat">{s.category}</span><h3>{s.name}</h3><p>{s.description}</p></div>
-    <div className="offer-foot"><span className="price-value">{money(s.price)}</span><span className="price-duration">{duration(s)}</span>{bookButton(s)}</div>
-   </article>)}</div>:<div className="offer-empty"><h3>Комплексы и акции скоро появятся здесь</h3><p>О действующих предложениях расскажет администратор.</p>{writeUs}</div>}
+    <div><h4>{s.name}</h4>{s.description&&<p>{s.description}</p>}</div>
+    <div className="offer-foot"><span className="price-value">{cost(s)}</span><span className="price-duration">{duration(s)}</span>{bookButton(s)}</div>
+   </article>)}</div></div>):<div className="offer-empty"><h3>Комплексы и акции скоро появятся здесь</h3><p>О действующих предложениях расскажет администратор.</p>{writeUs}</div>}
   </section>
 
   <section className="section lead body-lead" id="body" aria-labelledby="body-title">
-   <div className="lead-copy"><div className="eyebrow">АППАРАТНАЯ КОРРЕКЦИЯ ФИГУРЫ</div><h2 id="body-title">Коррекция фигуры<br/><em>по заявке</em></h2><p>Оставьте заявку — администратор перезвонит, расскажет о процедурах и подберёт удобное время для консультации.</p><ul className="body-points"><li>Консультация перед началом курса</li><li>Программу и количество процедур подбираем индивидуально</li><li>Стоимость — до первой процедуры, без скрытых доплат</li></ul></div>
+   <div className="lead-copy"><div className="eyebrow">АППАРАТНАЯ КОРРЕКЦИЯ ФИГУРЫ</div><h2 id="body-title">Коррекция фигуры<br/><em>по заявке</em></h2><p>Оставьте заявку — администратор перезвонит, расскажет о процедурах и подберёт удобное время для консультации.</p><ul className="body-points"><li>Первая консультация — бесплатно</li><li>Разовые сеансы и курсы из 5, 8 и 10 процедур: в курсе сеанс обходится дешевле</li><li>Стоимость известна заранее, без скрытых доплат</li></ul></div>
    <LeadForm catalog={catalog} loadError={loadError} type="body" topics={bodyTopics} preset={presetFor('body')} title="Заявка на коррекцию фигуры" caption="Перезвоним в рабочее время студии" submitLabel="Жду звонка" commentHint="Какой результат хотите получить, удобное время для звонка"/>
   </section>
   </>}
@@ -262,8 +266,10 @@ function App(){
    <div className="about-copy">
     <div className="eyebrow">О НАС</div>
     <h2 id="about-title">Место, где можно<br/><em>выдохнуть.</em></h2>
-    <p>«Эмблика» — студия красоты в Бежицком районе Брянска. Светлые залы, зелень и спокойный ритм — здесь не нужно торопиться, а можно просто побыть немного для себя.</p>
-    <p>Мы за естественную красоту, аккуратную работу и честный разговор о результате. Приходите за привычным уходом или начните с небольшой перемены.</p>
+    <p>«Эмблика» — студия красоты в Бежицком районе Брянска. Светлые залы, зелень и спокойный ритм: здесь не нужно торопиться, можно просто побыть немного для себя.</p>
+    <p>Под одной крышей — ногтевой сервис, ресницы и брови, эстетическая косметология, парикмахерский зал и аппаратная коррекция фигуры. Можно прийти на одну процедуру, а можно собрать комплекс и за один визит успеть больше: маникюр с педикюром, чистку с массажем лица, ламинирование ресниц и бровей.</p>
+    <p>Мы за естественную красоту, аккуратную работу и честный разговор о результате. Цены открыты заранее, скрытых доплат нет, а с каждого чека от 1000 ₽ возвращаем 3% на следующий визит. Стрижем и детей, а для подарка есть сертификаты.</p>
+    <ul className="about-facts"><li>Ежедневно с 10:00 до 20:00</li><li>Парковка и Wi-Fi</li><li>Оплата наличными, картой, по QR-коду, есть рассрочка</li></ul>
     <div className="values">{values.map(([t,d])=><div key={t}><h3>{t}</h3><p>{d}</p></div>)}</div>
    </div>
   </section>
@@ -272,7 +278,7 @@ function App(){
    <div className="section-head"><div><div className="eyebrow">МАСТЕРА</div><h2 id="team-title">Красота начинается<br/><em>с доверия.</em></h2></div><p>Три мастера. Разные направления.<br/>Одна студия рядом с вами.</p></div>
    <div className="team-grid">{team.map(m=><article className="master-card" key={m.id}>
     <div className="master-photo"><img src={'/assets/'+m.image+'.jpg'} alt={m.name+' — '+m.role} loading="lazy"/></div>
-    <div className="master-name"><h3>{m.name}</h3><button aria-label={'Записаться к мастеру '+m.name} onClick={()=>choose(m.service)}>↗</button></div>
+    <div className="master-name"><h3>{m.name}</h3><button aria-label={'Услуги мастера '+m.name} onClick={()=>showPrices(m.category)}>↗</button></div>
     <span>{m.role}</span><p>{m.text}</p>
    </article>)}</div>
   </section>

@@ -6,6 +6,8 @@ import './training.css';
 // Тексты раздела — от студии (30.09.2026). Латинское название программы не используем
 // без зарегистрированного товарного знака (168-ФЗ), поэтому «Бьюти Масштаб».
 export const onlineProgram='Онлайн-программа «Бьюти Масштаб»';
+// Бесплатный тест-драйв есть в прайсе студии (раздел «Обучение»).
+const testDrive='Бесплатный тест-драйв профессии мастера по наращиванию ресниц';
 const offline=[
  {group:'Ресницы',courses:[
   ['Наращивание ресниц','Освоение техники наращивания и построения красивого результата с учётом исходных данных клиента.'],
@@ -26,7 +28,7 @@ const steps=[
 ];
 const chain=['Преподаватель показывает','вы повторяете','получаете обратную связь','исправляете ошибки','закрепляете навык'];
 export const trainingTopics=[
- {label:'Офлайн-обучение с нуля',options:offline.flatMap(g=>g.courses.map(([title])=>title))},
+ {label:'Офлайн-обучение с нуля',options:[testDrive,...offline.flatMap(g=>g.courses.map(([title])=>title))]},
  {label:'Онлайн-обучение',options:[onlineProgram]},
  {label:'Другое',options:['Нужна консультация по выбору обучения']}
 ];
@@ -64,6 +66,7 @@ export default function Training({catalog,loadError,preset,pick}){
    <div><strong className="tr-motto">Не смотрим — делаем.</strong><p>Вы приходите не за набором теоретических уроков, а за практическим навыком, который нужно поставить в руки.</p></div>
   </div>
   <ol className="tr-chain" aria-label="Как ставится навык">{chain.map(c=><li key={c}>{c}</li>)}</ol>
+  <div className="tr-trial"><div><strong>Бесплатный тест-драйв профессии</strong><p>Час в студии с мастером по наращиванию ресниц: посмотрите, как устроена работа, и попробуйте сами — прежде чем выбирать курс.</p></div><button className="price-book" onClick={()=>pick(testDrive)}>Записаться на тест-драйв</button></div>
   {offline.map(g=><div className="tr-group" key={g.group}>
    <h3>{g.group}</h3>
    <div className="tr-courses">{g.courses.map(([title,text])=><article className="tr-course" key={title}>
