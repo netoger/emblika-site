@@ -24,6 +24,8 @@ if (!(int)query('SELECT COUNT(*) FROM masters')->fetchColumn()) {
       [10,'Окрашивание волос','Волосы','Цвет, техника и стоимость согласуются после оценки длины и состояния волос.',null,180,'[3]']
     ];
     foreach($services as $s)query('INSERT INTO services(id,name,category,description,price,duration,masters) VALUES(?,?,?,?,?,?,?)',$s);
-    for($d=0;$d<14;$d++)foreach([1,2,3] as $m)query('INSERT OR IGNORE INTO shifts(master_id,date,start_time,end_time) VALUES(?,?,?,?)',[$m,date('Y-m-d',strtotime("+$d days")),'10:00','19:00']);
+    for($d=0;$d<14;$d++)foreach([1,2,3] as $m)query('INSERT OR IGNORE INTO shifts(master_id,date,start_time,end_time) VALUES(?,?,?,?)',[$m,date('Y-m-d',strtotime("+$d days")),'10:00','20:00']);
 }
+// Миграции пропускались, пока таблиц не было; теперь приводим новую базу к последней версии.
+migrate(db());
 echo "База и демонстрационное расписание готовы.\n";

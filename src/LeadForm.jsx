@@ -1,11 +1,23 @@
-import React,{useRef,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {api} from './api';
 
-// Короткая заявка: клиент просит подобрать услугу или ученик — рассказать об обучении.
-export default function LeadForm({catalog,loadError,type,topics,title,caption,submitLabel,dark=false}){
- const [pending,setPending]=useState(false),[error,setError]=useState(''),[result,setResult]=useState(null);
- const requestId=useRef('');const lock=useRef(false);const resultRef=useRef(null);
+// Короткая заявка: клиент просит подобрать услугу, ученик — рассказать об обучении,
+// гость — о коррекции фигуры. topics — строки или группы {label, options}.
+// preset {topic, n} подставляет направление и прокручивает к форме (n меняется при каждом нажатии).
+export default function LeadForm({catalog,loadError,type,topics,title,caption,submitLabel,dark=false,preset=null,commentHint}){
+ const [pending,setPending]=useState(false),[error,setError]=useState(''),[result,setResult]=useState(null),[topic,setTopic]=useState('');
+ const requestId=useRef('');const lock=useRef(false);const resultRef=useRef(null);const rootRef=useRef(null);
+ useEffect(()=>{
+  if(!preset)return;
+  setTopic(preset.topic);setResult(null);
+  // Откладываем прокрутку: при смене вкладки страница сначала сама уходит наверх.
+  const t=setTimeout(()=>{rootRef.current?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});rootRef.current?.querySelector('input[name=name]')?.focus({preventScroll:true});},0);
+  return()=>clearTimeout(t);
+ },[preset?.n]);
+ const flat=topics.flatMap(t=>typeof t==='string'?[t]:t.options);
+ // Направление из кнопки может отсутствовать в списке (например, новая услуга) — добавляем его.
+ const list=preset&&!flat.includes(preset.topic)?[preset.topic,...topics]:topics;
  async function submit(e){
   e.preventDefault();if(lock.current)return;
   const f=new FormData(e.currentTarget);const name=f.get('name').trim();const phone=f.get('phone').replace(/\D/g,'');
@@ -16,17 +28,17 @@ export default function LeadForm({catalog,loadError,type,topics,title,caption,su
   lock.current=true;setPending(true);setError('');
   try{
    const r=await api('lead',{csrf:catalog.csrf,requestId:requestId.current,type,topic:f.get('topic'),name,phone,comment:(f.get('comment')||'').trim(),consent:f.get('consent')==='on',demoConsent:f.get('demoConsent')==='on',website:f.get('website')});
-   setResult({...r,topic:f.get('topic')});requestId.current='';setTimeout(()=>resultRef.current?.focus(),0);
+   setResult({...r,topic:f.get('topic')});requestId.current='';setTopic('');setTimeout(()=>resultRef.current?.focus(),0);
   }catch(err){setError(err.message);}
   finally{lock.current=false;setPending(false);}
  }
  const id=type+'-lead';
- return <div className={dark?'form-card lead-card dark':'form-card lead-card'}>{result?<div className="booking-success" tabIndex={-1} ref={resultRef}><span className="success-mark">✓</span><h3>Тестовая заявка отправлена</h3><p>Номер {result.reference} · {result.topic}</p><p>Заявка сохранена в демонстрационной базе и видна администратору в кабинете. Студия не получает уведомления о тестовых заявках.</p><Button className="button" label="Отправить ещё одну" onClick={()=>setResult(null)}/></div>:<>
+ return <div ref={rootRef} className={dark?'form-card lead-card dark':'form-card lead-card'}>{result?<div className="booking-success" tabIndex={-1} ref={resultRef}><span className="success-mark">✓</span><h3>Тестовая заявка отправлена</h3><p>Номер {result.reference} · {result.topic}</p><p>Заявка сохранена в демонстрационной базе и видна администратору в кабинете. Студия не получает уведомления о тестовых заявках.</p><Button className="button" label="Отправить ещё одну" onClick={()=>setResult(null)}/></div>:<>
   <h3>{title}</h3><p className="form-caption">{caption}</p>
   {loadError?<p role="alert" className="form-error">{loadError}</p>:!catalog?<p role="status">Загружаем форму…</p>:<form onSubmit={submit}><fieldset disabled={pending}><legend className="sr-only">{title}</legend>
-   <label>Направление<select name="topic" defaultValue="" required><option value="" disabled>Выберите направление</option>{topics.map(t=><option key={t} value={t}>{t}</option>)}</select></label>
+   <label>Направление<select name="topic" value={topic} onChange={e=>setTopic(e.target.value)} required><option value="" disabled>Выберите направление</option>{list.map(t=>typeof t==='string'?<option key={t} value={t}>{t}</option>:<optgroup key={t.label} label={t.label}>{t.options.map(o=><option key={o} value={o}>{o}</option>)}</optgroup>)}</select></label>
    <div className="form-row"><label>Тестовое имя<input name="name" placeholder="Например, Тестовый гость" required minLength={2} maxLength={80} autoComplete="off"/></label><label>Тестовый телефон<input name="phone" type="tel" placeholder="+7 000 000-00-00" defaultValue="+7 000 000-00-00" required maxLength={24} autoComplete="off"/></label></div>
-   <label>Комментарий (необязательно)<textarea name="comment" rows={3} maxLength={500} placeholder={type==='training'?'Опыт, удобные дни, вопросы о программе':'Что хотите сделать, удобное время для звонка'}/></label>
+   <label>Комментарий (необязательно)<textarea name="comment" rows={3} maxLength={500} placeholder={commentHint||(type==='training'?'Опыт, удобные дни, вопросы о программе':'Что хотите сделать, удобное время для звонка')}/></label>
    <label className="honeypot" aria-hidden="true">Сайт<input name="website" tabIndex={-1} autoComplete="off"/></label>
    <label className="consent"><input type="checkbox" name="demoConsent" required/><span>Понимаю, что это тестовая заявка, и использую вымышленные данные.</span></label>
    <label className="consent"><input type="checkbox" name="consent" required id={id+'-consent'}/><span>Согласен(на) с <a href="/consent.html" target="_blank" rel="noopener noreferrer">обработкой данных</a> и ознакомлен(а) с <a href="/privacy.html" target="_blank" rel="noopener noreferrer">политикой</a>.</span></label>

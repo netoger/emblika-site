@@ -80,7 +80,7 @@ h1{font-size:clamp(56px,6vw,96px);line-height:.96;letter-spacing:-.035em;margin:
 
 /* Направления */
 .directions{padding-top:40px}
-.direction-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.direction-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
 .direction-card{display:flex;flex-direction:column;text-align:left;padding:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--card);color:var(--ink);transition:transform .3s,box-shadow .3s,border-color .3s}
 .direction-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--green-soft)}
 .direction-photo{display:block;aspect-ratio:4/3.4;overflow:hidden;background:var(--sage)}
@@ -92,7 +92,7 @@ h1{font-size:clamp(56px,6vw,96px);line-height:.96;letter-spacing:-.035em;margin:
 .direction-price{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:14px;border-top:1px solid var(--border);font-size:14px;font-weight:600;color:var(--green)}
 .direction-price i{font-style:normal;font-size:18px}
 .explore{padding-top:40px}
-.explore-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.explore-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
 .explore-card{display:flex;flex-direction:column;gap:10px;padding:26px 24px;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);transition:transform .3s,box-shadow .3s,border-color .3s}
 .explore-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--green-soft)}
 .explore-card strong{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:30px;line-height:1.1}
@@ -121,7 +121,43 @@ h1{font-size:clamp(56px,6vw,96px);line-height:.96;letter-spacing:-.035em;margin:
 .price-book{justify-self:end;border:1px solid var(--green);background:transparent;color:var(--green-deep);border-radius:999px;min-height:42px;padding:0 18px;font-size:13px;font-weight:600;transition:background .2s,color .2s}
 .price-book:hover{background:var(--green);color:#fff}
 .price-empty{padding:30px 26px;color:var(--muted)}
-.price-empty a{text-decoration:underline;color:var(--green)}
+.price-empty a,.inline-link{text-decoration:underline;color:var(--green)}
+.inline-link{background:none;border:0;padding:0;font:inherit}
+/* Фото услуги в прайсе: колонка появляется, только если у показанных услуг есть фото */
+.price-table.with-photos .price-row{grid-template-columns:72px 1fr 110px 150px 140px}
+.price-photo{width:72px;height:72px;border-radius:12px;overflow:hidden;padding:0;border:0;background:var(--sage)}
+.price-photo img{transition:transform .3s}
+.price-photo:hover img{transform:scale(1.06)}
+.price-photo.empty{display:block;background:transparent}
+/* Преимущества: без доплат, сертификаты, кэшбэк */
+.perks{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:30px}
+.perk{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;display:flex;flex-direction:column;gap:8px}
+.perk strong{font-family:'Cormorant Garamond',serif;font-weight:400;font-size:28px;line-height:1.1;color:var(--green-deep)}
+.perk p{font-size:14px;line-height:1.6;color:var(--muted);flex:1}
+.perk .text-link{align-self:flex-start;background:none;border:0;border-bottom:1px solid var(--border);font-weight:600;font-size:13px}
+.perks-section{padding-top:20px}
+.perks-section .perks{margin-bottom:0}
+/* Комплексы и спецпредложения */
+.offer-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.offer-card{display:flex;flex-direction:column;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;padding-bottom:20px}
+.offer-card>div{padding:0 22px}
+.offer-card>div:first-child{padding-top:22px}
+.offer-photo{display:block;padding:0;border:0;aspect-ratio:4/3;overflow:hidden;background:var(--sage)}
+.offer-photo+div{padding-top:0}
+.offer-card h3{font-size:30px;line-height:1.1}
+.offer-card p{font-size:14px;line-height:1.6;color:var(--muted);margin-top:8px}
+.offer-foot{margin-top:auto;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px}
+.offer-foot .price-book{margin-left:auto}
+.offer-empty{background:var(--card);border:1px dashed var(--border);border-radius:var(--radius);padding:30px}
+.offer-empty h3{font-size:30px}
+.offer-empty p{color:var(--muted);margin-top:8px}
+.offer-empty .lead-contacts{margin-top:18px}
+/* Коррекция фигуры */
+.body-lead{background:var(--paper-2);max-width:none;border-radius:32px;margin:0 2% 40px;padding-inline:3%}
+.body-points{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:10px}
+.body-points li{padding-left:26px;position:relative;font-size:15px}
+.body-points li:before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:700}
+.review-links{display:flex;flex-wrap:wrap;gap:6px 24px}
 .prices .fine{margin-top:16px}
 
 /* О студии */
@@ -198,7 +234,8 @@ h1{font-size:clamp(56px,6vw,96px);line-height:.96;letter-spacing:-.035em;margin:
 .contacts dl>div{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--border)}
 .contacts dt{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-top:3px}
 .contacts dd{margin:0;font-size:16px;line-height:1.6}
-.contacts dd a{color:var(--green);font-weight:600}
+.contacts dd a{color:var(--green);font-weight:600;display:block}
+.contacts dd a small{color:var(--muted);font-weight:400;font-size:13px}
 .socials{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
 .socials a{border:1px solid var(--border);border-radius:999px;padding:9px 16px;font-size:14px;background:var(--card)}
 .socials a:hover{border-color:var(--green);color:var(--green)}
@@ -244,7 +281,10 @@ input::placeholder,textarea::placeholder{color:#7d877f}
 @media(max-width:1180px){
  .header{gap:18px}.header-phone{display:none}.nav{gap:18px}
  .hero{gap:4%}.hero-visual{min-height:560px}
- .direction-grid{grid-template-columns:repeat(2,1fr)}
+ .direction-grid{grid-template-columns:repeat(3,1fr)}
+ .price-table.with-photos .price-row{grid-template-columns:64px 1fr 90px 130px 130px}
+ .perks,.offer-grid{grid-template-columns:1fr 1fr}
+ .explore-grid{grid-template-columns:1fr 1fr}
  .price-row{grid-template-columns:1fr 90px 130px 130px}
  .section{padding-block:76px}
  .form-row{grid-template-columns:1fr;gap:0}
@@ -257,6 +297,10 @@ input::placeholder,textarea::placeholder{color:#7d877f}
  .gallery{grid-template-columns:repeat(2,1fr)}
  .team-grid{grid-template-columns:1fr 1fr}
  .explore-grid{grid-template-columns:1fr}
+ .perks,.offer-grid{grid-template-columns:1fr}
+ .direction-grid{grid-template-columns:1fr 1fr}
+ .direction-card:last-child:nth-child(odd){grid-column:1/-1}
+ .direction-card:last-child:nth-child(odd) .direction-photo{aspect-ratio:16/7}
 }
 @media(max-width:760px){
  html{scroll-padding-top:76px}
@@ -306,6 +350,13 @@ input::placeholder,textarea::placeholder{color:#7d877f}
  .price-row{grid-template-columns:1fr auto;grid-template-areas:'name name' 'value book' 'dur book';gap:4px 12px;padding:18px}
  .price-name{grid-area:name;margin-bottom:8px}.price-duration{grid-area:dur}.price-value{grid-area:value;text-align:left}
  .price-book{grid-area:book;align-self:center}
+ .price-table.with-photos .price-row{grid-template-columns:56px 1fr auto;grid-template-areas:'photo name name' 'value value book' 'dur dur book'}
+ .price-table.with-photos .price-row:has(.price-photo.empty){grid-template-columns:1fr auto;grid-template-areas:'name name' 'value book' 'dur book'}
+ .price-photo{grid-area:photo;width:56px;height:56px;align-self:start}
+ .price-photo.empty{display:none}
+ .price-table.with-photos .price-name{margin-left:4px}
+ .body-lead{margin:0 0 30px;border-radius:0;padding-inline:20px}
+ .perk{padding:18px}
  .about-photos{min-height:400px}
  .values{grid-template-columns:1fr;gap:12px}
  .team-grid{grid-template-columns:1fr;gap:40px}

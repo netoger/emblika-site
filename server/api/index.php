@@ -6,6 +6,18 @@ start_session();
 try {
  $method=$_SERVER['REQUEST_METHOD'];$action=$_GET['action']??'catalog';
  $input=[];
+ // Фото услуги приходит формой с файлом, а не JSON: проверки доступа и CSRF — по полям формы.
+ if($method==='POST' && $action==='service_image'){
+    if((int)($_SERVER['CONTENT_LENGTH']??0)>16*1024*1024)fail('Файл больше 15 МБ. Уменьшите фотографию.',413);
+    csrf($_POST);admin_required();
+    $id=(int)($_POST['id']??0);
+    $old=query('SELECT image FROM services WHERE id=?',[$id])->fetch(PDO::FETCH_ASSOC);
+    if(!$old)fail('Услуга не найдена.',404);
+    $image=($_POST['remove']??'')==='1'?null:store_service_image($id,$_FILES['image']??[]);
+    query('UPDATE services SET image=? WHERE id=?',[$image,$id]);
+    remove_service_image($old['image']);
+    reply(['ok'=>true,'image'=>$image]);
+ }
  if($method==='POST'){
     if((int)($_SERVER['CONTENT_LENGTH']??0)>12000)fail('Слишком большой запрос.',413);
     $input=json_decode(file_get_contents('php://input'),true);
@@ -44,7 +56,8 @@ try {
     if(!empty($input['website']))fail('Не удалось отправить заявку.');
     if(($input['consent']??false)!==true || ($input['demoConsent']??false)!==true)fail('Подтвердите согласие и тестовый характер заявки.');
     $type=(string)($input['type']??'');
-    if(!in_array($type,['client','training'],true))fail('Неизвестный тип заявки.');
+    // client — подбор процедуры, training — обучение, body — аппаратная коррекция фигуры.
+    if(!in_array($type,['client','training','body'],true))fail('Неизвестный тип заявки.');
     $name=clean_text((string)($input['name']??''));$phone=preg_replace('/\D/','',(string)($input['phone']??''));
     if(mb_strlen($name)<2 || mb_strlen($name)>80)fail('Имя должно содержать от 2 до 80 символов.');
     if(!preg_match('/^[78]\d{10}$/',$phone))fail('Укажите номер из 11 цифр, начинающийся с 7 или 8.');
@@ -58,7 +71,7 @@ try {
     try {
        $old=query('SELECT reference FROM leads WHERE request_id=?',[$sessionRequest])->fetchColumn();
        if($old){db()->exec('COMMIT');reply(['reference'=>$old,'demo'=>true]);}
-       $reference=($type==='training'?'ОБ-':'ЗА-').strtoupper(bin2hex(random_bytes(4)));
+       $reference=['training'=>'ОБ-','body'=>'КФ-','client'=>'ЗА-'][$type].strtoupper(bin2hex(random_bytes(4)));
        query('INSERT INTO leads(reference,request_id,type,topic,name,phone,comment,consent_at,consent_ip,consent_version,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)',[$reference,$sessionRequest,$type,$topic,$name,$phone,$comment,time(),$_SERVER['REMOTE_ADDR']??'',CONSENT_VERSION,time()]);
        db()->exec('COMMIT');reply(['reference'=>$reference,'demo'=>true],201);
     }catch(Throwable $e){if(db()->inTransaction())db()->rollBack();else {try{db()->exec('ROLLBACK');}catch(Throwable $ignored){}}throw $e;}
@@ -115,9 +128,37 @@ try {
     db()->exec('COMMIT');reply(['ok'=>true]);
  }
  if($method==='POST' && $action==='service'){
-    $id=(int)($input['id']??0);$name=trim((string)($input['name']??''));$duration=(int)($input['duration']??0);$price=$input['price']??null;
+    // id=0 создаёт новую услугу, иначе обновляет существующую.
+    $id=(int)($input['id']??0);$name=clean_text((string)($input['name']??''));$duration=(int)($input['duration']??0);$price=$input['price']??null;
+    $category=clean_text((string)($input['category']??''));$description=clean_text((string)($input['description']??''));$mode=(string)($input['mode']??'booking');
     if(mb_strlen($name)<2 || mb_strlen($name)>100 || $duration<30 || $duration>360 || $duration%30!==0 || ($price!==null && (!is_numeric($price) || $price<0 || $price>100000)))fail('Проверьте название, цену и длительность (30–360 минут с шагом 30).');
-    query('UPDATE services SET name=?,price=?,duration=?,active=? WHERE id=?',[$name,$price===null?null:(int)$price,$duration,($input['active']??true)?1:0,$id]);reply(['ok'=>true]);
+    if(mb_strlen($category)<2 || mb_strlen($category)>60)fail('Укажите раздел услуги.');
+    if(mb_strlen($description)>400)fail('Описание — не более 400 символов.');
+    if(!in_array($mode,['booking','request'],true))fail('Неизвестный способ записи.');
+    $masters=$input['masters']??[];
+    if(!is_array($masters))fail('Проверьте список мастеров.');
+    $masters=array_values(array_unique(array_map('intval',$masters)));sort($masters);
+    $known=array_map('intval',query('SELECT id FROM masters')->fetchAll(PDO::FETCH_COLUMN));
+    if(array_diff($masters,$known))fail('Проверьте список мастеров.');
+    if($mode==='booking' && !$masters)fail('Для онлайн-записи выберите хотя бы одного мастера.');
+    $values=[$name,$category,$description,$price===null?null:(int)$price,$duration,json_encode($masters),$mode,($input['active']??true)?1:0];
+    if($id){
+       if(!query('SELECT id FROM services WHERE id=?',[$id])->fetchColumn())fail('Услуга не найдена.',404);
+       query('UPDATE services SET name=?,category=?,description=?,price=?,duration=?,masters=?,mode=?,active=? WHERE id=?',[...$values,$id]);
+    }else{
+       query('INSERT INTO services(name,category,description,price,duration,masters,mode,active) VALUES(?,?,?,?,?,?,?,?)',$values);
+       $id=(int)db()->lastInsertId();
+    }
+    reply(['ok'=>true,'id'=>$id]);
+ }
+ if($method==='POST' && $action==='service_delete'){
+    $id=(int)($input['id']??0);
+    // Записи хранят ссылку на услугу: такую услугу только снимают с публикации.
+    if(query('SELECT COUNT(*) FROM appointments WHERE service_id=?',[$id])->fetchColumn())fail('На эту услугу есть записи. Снимите её с публикации вместо удаления.',409);
+    $image=query('SELECT image FROM services WHERE id=?',[$id])->fetchColumn();
+    query('DELETE FROM services WHERE id=?',[$id]);
+    remove_service_image($image?:null);
+    reply(['ok'=>true]);
  }
  fail('Действие не найдено.',404);
 } catch(Throwable $e) {error_log('Emblika API failure: '.get_class($e));reply(['error'=>'Сервис временно недоступен. Попробуйте позднее.'],500);}

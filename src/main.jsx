@@ -12,39 +12,54 @@ import '@fontsource/cormorant-garamond/400-italic.css';
 import './style.css';
 import Booking from './Booking';
 import LeadForm from './LeadForm';
+import Training from './Training';
 import Admin from './Admin';
 import {api,money} from './api';
 import './extension.css';
 
-// Вкладки сайта. Адрес вида #/prices работает на любом хостинге без правил перезаписи.
-const pages=[['home','Главная'],['prices','Услуги и цены'],['booking','Запись'],['about','О студии'],['training','Обучение'],['contacts','Контакты']];
-// Старые якоря одностраничной версии ведут на вкладку, где теперь лежит раздел.
-const legacy={directions:'home',reviews:'home',prices:'prices',request:'booking',lead:'booking',about:'about',team:'about',works:'about',training:'training',contacts:'contacts'};
+// Вкладки сайта. Адрес вида #/services работает на любом хостинге без правил перезаписи.
+// «Главная» открывается по логотипу и в верхнее меню не входит.
+const pages=[['home','Главная'],['services','Услуги и комплексы'],['booking','Запись'],['reviews','Отзывы'],['about','О нас'],['training','Обучение'],['contacts','Контакты']];
+// Прежние адреса вкладок и якоря одностраничной версии ведут туда, где теперь лежит раздел.
+const aliases={prices:'services'};
+const legacy={directions:'home',prices:'services',request:'booking',lead:'booking',reviews:'reviews',about:'about',team:'about',works:'about',training:'training',contacts:'contacts'};
 const href=id=>id==='home'?'#/':'#/'+id;
 const booking=href('booking');
 const baseTitle='Эмблика — время для себя · Брянск';
 function readPage(){
  const h=location.hash.slice(1);
- if(h.startsWith('/'))return pages.some(([id])=>id===h.slice(1))?h.slice(1):'home';
+ if(h.startsWith('/')){const id=aliases[h.slice(1)]||h.slice(1);return pages.some(([p])=>p===id)?id:'home';}
  return h?legacy[h]||null:'home';
 }
 const maps='https://yandex.ru/maps/org/emblika/145016511707/';
 const mapWidget='https://yandex.ru/map-widget/v1/org/emblika/145016511707/';
-const phone={href:'tel:+79964474306',label:'+7 (996) 447-43-06'};
-// Ссылки и часы работы — из открытой карточки студии на DIKIDI.
-// Мессенджер Meta не выводим: сервисы Meta со страниц убираем (скилл russian_site).
+const phones=[{href:'tel:+79964474306',label:'+7 (996) 447-43-06'},{href:'tel:+79102973661',label:'+7 (910) 297-36-61'}];
+const phone=phones[0];
+// Ссылки — из открытой карточки студии на DIKIDI. Сервисы Meta со страниц убираем (скилл russian_site).
 const socials=[['Telegram','https://t.me/Emblicabeautybar'],['ВКонтакте','https://vk.com/emblica']];
-const hours='Ежедневно, 10:00–19:00';
+// Куда написать. Ссылку на MAX пришлёт студия: пока её нет, пункт не выводится.
+const messengers=[['ВКонтакте','https://vk.me/emblica','сообщения сообщества'],['MAX','','мессенджер'],['Telegram','https://t.me/Emblicabeautybar','']].filter(([,url])=>url);
+const hours='Ежедневно, 10:00–20:00';
 // Категории совпадают с полем category в таблице services.
 const directions=[
  {category:'Ногти',title:'Маникюр и педикюр',image:'work-1',text:'Уход, покрытие гель-лаком, наращивание и экспресс-педикюр.'},
  {category:'Ресницы и брови',title:'Ресницы и брови',image:'work-2',text:'Наращивание и ламинирование ресниц, оформление бровей.'},
- {category:'Уход за лицом',title:'Уход за лицом',image:'room',text:'Уходовые программы и массаж лица.'},
- {category:'Волосы',title:'Волосы',image:'studio',text:'Женские и мужские стрижки, окрашивание волос.'}
+ {category:'Эстетическая косметология',title:'Косметология',image:'room',text:'Чистки, пилинги, радиочастотный лифтинг и уход за лицом.'},
+ {category:'Волосы',title:'Волосы',image:'studio',text:'Стрижки, окрашивание и уходовые процедуры для волос.'},
+ {category:'Коррекция фигуры',title:'Коррекция фигуры',image:'detail',text:'Аппаратные процедуры — программу подбираем на консультации.'}
 ];
+const bodyCategory='Коррекция фигуры';
+// Эти разделы показываются карточками в блоке «Комплексы и спецпредложения», а не строками прайса.
+const offerCategories=['Комплексы','Спецпредложения'];
+const perks=[
+ ['Без скрытых доплат','Стоимость мастер называет до начала процедуры. Всё, что может повлиять на цену, обсуждаем заранее — без сюрпризов в конце.'],
+ ['Подарочные сертификаты','Подарите близким время для себя. Номинал и условия сертификата подскажет администратор.','Узнать о сертификатах'],
+ ['Кэшбэк 3%','С чека от 1000 ₽ возвращаем 3% — ими можно воспользоваться при следующем визите в студию.']
+];
+const giftTopic='Подарочный сертификат';
 const values=[
  ['Забота без спешки','Длительность процедуры известна заранее — время рассчитано так, чтобы мастеру не приходилось торопиться.'],
- ['Стоимость до визита','Прайс открыт на сайте. Цену и длительность вы видите до того, как выбираете время.'],
+ ['Стоимость до визита','Прайс открыт на сайте, а скрытых доплат нет: итоговую цену мастер называет до начала работы.'],
  ['Внимание к деталям','Форму, оттенок и привычный уход обсуждаем до начала работы, а не по ходу.'],
  ['Растим мастеров','На базе студии проходит обучение — делимся опытом с теми, кто только начинает путь в профессии.']
 ];
@@ -61,27 +76,28 @@ const photos=[
  ['work-3','Аккуратная форма и естественное покрытие',''],
  ['studio','Зал студии','']
 ];
-const courses=[
- {title:'Ногтевой сервис',image:'work-3',text:'Маникюр, подготовка ногтевой пластины и покрытие гель-лаком.'},
- {title:'Ресницы',image:'polina',text:'Наращивание и ламинирование ресниц: подбор изгиба, длины и эффекта.'},
- {title:'Брови',image:'work-2',text:'Архитектура и оформление бровей, подбор формы под черты лица.'}
-];
-const trainingTopics=['Ногтевой сервис','Наращивание и ламинирование ресниц','Оформление бровей','Другое направление'];
-const clientTopics=['Помочь выбрать услугу',...directions.map(d=>d.title),'Подарочный визит'];
 const faq=[
- ['Как работает запись на новом сайте?','Выберите услугу, мастера, дату и свободное время. После отправки запись появится в кабинете студии, а выбранное окно станет недоступным другим посетителям. Сейчас сайт работает в тестовом режиме: реальный визит не бронируется.'],
- ['Не знаю, какую услугу выбрать. Что делать?','Оставьте заявку «Подберём процедуру» на вкладке «Запись» или позвоните по номеру +7 (996) 447-43-06. Особенно полезно заранее обсудить окрашивание, уход за лицом и сложный дизайн ногтей.'],
- ['Цена на сайте окончательная?','Сейчас это ориентиры для презентации. Итоговая стоимость зависит от процедуры, длины волос или ногтей, дизайна и дополнительных услуг. Подтвердите её с мастером до начала работы.'],
+ ['Как работает запись на сайте?','Выберите услугу, мастера, дату и свободное время. После отправки запись появится в кабинете студии, а выбранное окно станет недоступным другим посетителям. Сейчас сайт работает в тестовом режиме: реальный визит не бронируется.'],
+ ['Не знаю, какую услугу выбрать. Что делать?','Оставьте заявку «Подберём процедуру» на вкладке «Запись» или позвоните по номеру +7 (996) 447-43-06. Особенно полезно заранее обсудить окрашивание, косметологию и сложный дизайн ногтей.'],
+ ['Цена на сайте окончательная?','Цены в прайсе — ориентир: итог зависит от процедуры, длины волос или ногтей, дизайна и дополнительных услуг. Скрытых доплат нет — окончательную стоимость мастер называет до начала работы. Сейчас цены на сайте демонстрационные.'],
+ ['Есть ли подарочные сертификаты?','Да. Номинал и условия уточните у администратора по телефону или оставьте заявку на вкладке «Запись».'],
+ ['Как работает кэшбэк?','С чека от 1000 ₽ студия возвращает 3%. Воспользоваться ими можно при следующем визите в «Эмблику».'],
  ['Можно ли прийти на несколько процедур?','Да, в студии несколько направлений. На сайте создайте отдельную запись на каждую процедуру, а последовательность обсудите со студией.'],
- ['Как попасть на обучение?','Оставьте заявку на вкладке «Обучение». Администратор свяжется с вами и расскажет о программе, датах и стоимости.'],
+ ['Как попасть на обучение?','Есть офлайн-обучение с нуля в студии и онлайн-программа для практикующих мастеров. Выберите формат на вкладке «Обучение» и оставьте заявку — администратор расскажет о программе, датах и стоимости.'],
  ['Как изменить или отменить запись?','В тестовой версии администратор отменяет запись в кабинете — время снова появляется в расписании. Реальные договорённости о визите меняются напрямую со студией по телефону.']
 ];
 const explore=[
- ['about','О студии и мастерах','Пространство, ценности, команда и фотографии работ.'],
- ['training','Обучение','Курсы на базе студии и заявка ученика.'],
- ['contacts','Контакты и вопросы','Адрес, часы работы, карта и ответы перед визитом.']
+ ['about','О нас','Пространство, ценности, мастера и фотографии работ.'],
+ ['reviews','Отзывы','Что говорят гости — прямо из карточки студии на Яндекс Картах.'],
+ ['training','Обучение','Офлайн-курсы с нуля и онлайн-программа для мастеров.'],
+ ['contacts','Контакты','Адрес, часы работы, карта и ответы на вопросы перед визитом.']
 ];
 const Arrow=()=> <span aria-hidden="true">↗</span>;
+const duration=s=>s.mode==='request'?'по консультации':'≈ '+s.duration+' мин';
+
+function Perks({onGift}){
+ return <div className="perks">{perks.map(([title,text,action])=><div className="perk" key={title}><strong>{title}</strong><p>{text}</p>{action&&<button className="text-link" onClick={onGift}>{action} →</button>}</div>)}</div>;
+}
 
 function App(){
  const [menu,setMenu]=useState(false),[catalog,setCatalog]=useState(null),[selected,setSelected]=useState(''),[loadError,setLoadError]=useState('');
@@ -89,15 +105,19 @@ function App(){
  const [external,setExternal]=useState(()=>{try{return localStorage.getItem('emblika-external');}catch{return null;}});
  const [cookieOpen,setCookieOpen]=useState(!external),[gallery,setGallery]=useState(null);
  const [page,setPage]=useState(()=>readPage()||'home');
+ // Направление, подставляемое в форму заявки: {type, topic, n}.
+ const [preset,setPreset]=useState(null);
  const first=useRef(true);
  function allow(value){setExternal(value);setCookieOpen(false);try{localStorage.setItem('emblika-external',value);}catch{}}
  useEffect(()=>{api('catalog').then(setCatalog).catch(e=>setLoadError(e.message));},[]);
  useEffect(()=>{if(!gallery)return;const dialog=document.getElementById('photo-dialog');dialog?.showModal();return()=>dialog?.close();},[gallery]);
  useEffect(()=>{
-  // Старый якорь заменяем адресом вкладки, чтобы кнопка «Назад» работала предсказуемо.
+  // Старый якорь или прежний адрес заменяем адресом вкладки, чтобы кнопка «Назад» работала предсказуемо.
   // Прочие якоря без «/» (например, ссылка «Перейти к содержимому») вкладку не меняют.
   const sync=()=>{
-   const h=location.hash.slice(1);if(h&&!h.startsWith('/')&&legacy[h])history.replaceState(null,'',href(legacy[h]));
+   const h=location.hash.slice(1);
+   if(h&&!h.startsWith('/')&&legacy[h])history.replaceState(null,'',href(legacy[h]));
+   else if(h.startsWith('/')&&aliases[h.slice(1)])history.replaceState(null,'',href(aliases[h.slice(1)]));
    const next=readPage();if(next)setPage(next);
   };
   sync();addEventListener('hashchange',sync);return()=>removeEventListener('hashchange',sync);
@@ -112,14 +132,35 @@ function App(){
  },[page]);
  function go(id){if(page===id)scrollTo(0,0);else location.hash=href(id);}
  function choose(id){setSelected(String(id));go('booking');}
- function showPrices(cat){setCategory(cat);setSearch('');go('prices');}
- const fromPrice=cat=>{const list=(catalog?.services||[]).filter(s=>s.category===cat&&s.price!=null).map(s=>Number(s.price));return list.length?'от '+money(Math.min(...list)):'Цена по согласованию';};
+ function showPrices(cat){setCategory(cat);setSearch('');go('services');}
+ // Открывает нужную форму заявки с выбранным направлением.
+ function requestLead(type,topic){
+  setPreset({type,topic,n:Date.now()});
+  const target={client:'booking',body:'services',training:'training'}[type];
+  if(page!==target)location.hash=href(target);
+ }
+ const ask=s=>requestLead(s.category===bodyCategory?'body':'client',s.name);
+ const all=catalog?.services||[];
+ const fromPrice=cat=>{const list=all.filter(s=>s.category===cat&&s.price!=null).map(s=>Number(s.price));return list.length?'от '+money(Math.min(...list)):'Цена по согласованию';};
+ const priced=all.filter(s=>!offerCategories.includes(s.category));
+ const offers=all.filter(s=>offerCategories.includes(s.category));
+ // Порядок фильтров: сначала направления студии, затем разделы, добавленные в кабинете.
+ const categories=[...directions.map(d=>d.category),...new Set(priced.map(s=>s.category))].filter((c,i,a)=>a.indexOf(c)===i&&priced.some(s=>s.category===c));
  const services=useMemo(()=>{
   const q=search.trim().toLowerCase();
-  return (catalog?.services||[]).filter(s=>(category==='all'||s.category===category)&&(!q||`${s.name} ${s.description} ${s.category}`.toLowerCase().includes(q)));
+  return priced.filter(s=>(category==='all'||s.category===category)&&(!q||`${s.name} ${s.description} ${s.category}`.toLowerCase().includes(q)));
  },[catalog,category,search]);
+ const withPhotos=services.some(s=>s.image);
+ const clientTopics=[...new Set(['Помочь выбрать услугу',...directions.filter(d=>d.category!==bodyCategory).map(d=>d.title),giftTopic,...priced.filter(s=>s.mode==='request'&&s.category!==bodyCategory).map(s=>s.name)])];
+ const bodyTopics=[...new Set(['Аппаратная коррекция фигуры',...priced.filter(s=>s.category===bodyCategory).map(s=>s.name)])];
+ const presetFor=type=>preset?.type===type?preset:null;
  const nav=pages.filter(([id])=>id!=='home');
  const navLink=([id,label])=><a key={id} href={href(id)} aria-current={page===id?'page':undefined} onClick={()=>setMenu(false)}>{label}</a>;
+ const openPhoto=(src,title)=>setGallery({src,title});
+ const bookButton=s=>s.mode==='request'
+  ?<button className="price-book" onClick={()=>ask(s)} aria-label={'Оставить заявку: '+s.name}>Оставить заявку</button>
+  :<button className="price-book" onClick={()=>choose(s.id)} aria-label={'Записаться: '+s.name}>Записаться</button>;
+ const writeUs=<div className="lead-contacts">{phones.map(p=><a key={p.href} href={p.href}>{p.label}</a>)}{messengers.map(([n,u])=><a key={n} href={u} target="_blank" rel="noopener noreferrer">{n} ↗</a>)}</div>;
 
  return <>
  <a className="skip" href="#main">Перейти к содержимому</a>
@@ -138,9 +179,9 @@ function App(){
    <div className="hero-copy">
     <div className="eyebrow"><span className="line"/>СТУДИЯ КРАСОТЫ В БРЯНСКЕ · БЕЖИЦА</div>
     <h1>Красота,<br/>которая <em>растёт<br/>из заботы.</em></h1>
-    <p>Ногти, ресницы и брови, уход за лицом и волосы — в одной спокойной студии. Выберите услугу, посмотрите цену и запишитесь онлайн за пару минут.</p>
-    <div className="hero-actions"><Button className="button" label="Записаться онлайн" href={booking} endContent={<Arrow/>}/><a className="button ghost" href={href('prices')}>Смотреть прайс</a></div>
-    <ul className="hero-facts"><li><strong>4</strong><span>направления<br/>в одной студии</span></li><li><strong>3</strong><span>мастера<br/>в команде</span></li><li><strong>10–19</strong><span>ежедневно<br/>по записи</span></li></ul>
+    <p>Ногти, ресницы и брови, косметология, волосы и коррекция фигуры — в одной спокойной студии. Выберите услугу, посмотрите цену и запишитесь онлайн за пару минут.</p>
+    <div className="hero-actions"><Button className="button" label="Записаться онлайн" href={booking} endContent={<Arrow/>}/><a className="button ghost" href={href('services')}>Смотреть услуги и цены</a></div>
+    <ul className="hero-facts"><li><strong>5</strong><span>направлений<br/>в одной студии</span></li><li><strong>3</strong><span>мастера<br/>в команде</span></li><li><strong>10–20</strong><span>ежедневно<br/>по записи</span></li></ul>
    </div>
    <div className="hero-visual">
     <div className="hero-main"><img src="/assets/detail.jpg" alt="Рабочее место мастера в студии Эмблика: зеркало и зелёные панно" fetchPriority="high"/></div>
@@ -157,9 +198,9 @@ function App(){
    </button>)}</div>
   </section>
 
-  <section className="reviews section" id="reviews" aria-labelledby="reviews-title">
-   <div className="review-story"><div className="eyebrow">ОТЗЫВЫ</div><h2 id="reviews-title">Знакомство<br/><em>через впечатления.</em></h2><p>Отзывы помогают почувствовать атмосферу студии ещё до первого визита. Здесь — виджет реальной карточки «Эмблики» на Яндекс Картах.</p><a href={maps+'reviews/'} target="_blank" rel="noopener noreferrer" className="text-link">Открыть все отзывы <Arrow/></a></div>
-   <div className="review-widget">{external==='accepted'?<iframe src="https://yandex.ru/maps-reviews-widget/145016511707?comments" title="Отзывы о студии Эмблика на Яндекс Картах" loading="lazy" referrerPolicy="strict-origin-when-cross-origin"/>:<div className="review-placeholder"><span className="review-symbol">“</span><h3>Гости — о студии</h3><p>Чтобы показать актуальные отзывы, нужно загрузить виджет Яндекса. Сервис получит технические данные вашего браузера.</p><Button className="button" label="Загрузить отзывы Яндекса" onClick={()=>allow('accepted')}/></div>}</div>
+  <section className="section perks-section" aria-labelledby="perks-title">
+   <div className="section-head"><div><div className="eyebrow">ЧЕСТНО И ВЫГОДНО</div><h2 id="perks-title">Приятно <em>возвращаться</em></h2></div></div>
+   <Perks onGift={()=>requestLead('client',giftTopic)}/>
   </section>
 
   <section className="section explore" aria-labelledby="explore-title">
@@ -168,35 +209,58 @@ function App(){
   </section>
   </>}
 
-  {page==='prices'&&<section className="section prices" id="prices" aria-labelledby="prices-title">
-   <div className="section-head"><div><div className="eyebrow">ПРАЙС</div><h2 id="prices-title">Услуги <em>и цены</em></h2></div><p>Найдите процедуру по названию и сразу выберите время.</p></div>
+  {page==='services'&&<>
+  <section className="section prices" id="services" aria-labelledby="services-title">
+   <div className="section-head"><div><div className="eyebrow">УСЛУГИ И КОМПЛЕКСЫ</div><h2 id="services-title">Услуги <em>и цены</em></h2></div><p>Все процедуры студии. Выберите услугу — и сразу запишитесь онлайн или оставьте заявку.</p></div>
+   <Perks onGift={()=>requestLead('client',giftTopic)}/>
    <div className="price-tools">
-    <label className="price-search"><span className="sr-only">Поиск услуги</span><input type="search" placeholder="Поиск: маникюр, ресницы, стрижка…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
-    <div className="chips" role="group" aria-label="Направление">{[['all','Все услуги'],...directions.map(d=>[d.category,d.title])].map(([id,label])=><button key={id} aria-pressed={category===id} onClick={()=>setCategory(id)}>{label}</button>)}</div>
+    <label className="price-search"><span className="sr-only">Поиск услуги</span><input type="search" placeholder="Поиск: маникюр, чистка, стрижка…" value={search} onChange={e=>setSearch(e.target.value)}/></label>
+    <div className="chips" role="group" aria-label="Направление">{[['all','Все услуги'],...categories.map(c=>[c,directions.find(d=>d.category===c)?.title||c])].map(([id,label])=><button key={id} aria-pressed={category===id} onClick={()=>setCategory(id)}>{label}</button>)}</div>
    </div>
-   <div className="price-table" aria-live="polite">{!catalog?<p className="price-empty">{loadError||'Загружаем услуги…'}</p>:services.length?services.map(s=><div className="price-row" key={s.id}>
+   <div className={withPhotos?'price-table with-photos':'price-table'} aria-live="polite">{!catalog?<p className="price-empty">{loadError||'Загружаем услуги…'}</p>:services.length?services.map(s=><div className="price-row" key={s.id}>
+    {withPhotos&&(s.image?<button className="price-photo" onClick={()=>openPhoto(s.image,s.name)} aria-label={'Фото: '+s.name}><img src={s.image} alt="" loading="lazy"/></button>:<span className="price-photo empty" aria-hidden="true"/>)}
     <div className="price-name"><span className="price-cat">{s.category}</span><strong>{s.name}</strong><small>{s.description}</small></div>
-    <span className="price-duration">≈ {s.duration} мин</span>
+    <span className="price-duration">{duration(s)}</span>
     <span className="price-value">{money(s.price)}</span>
-    <button className="price-book" onClick={()=>choose(s.id)} aria-label={'Записаться: '+s.name}>Записаться</button>
-   </div>):<p className="price-empty">Ничего не нашли. Попробуйте другое слово или <a href={href('booking')}>оставьте заявку</a> — подберём процедуру.</p>}</div>
-   <p className="fine">Цены — ориентиры для демонстрации. Итоговую стоимость и длительность подтверждает мастер до начала процедуры.</p>
-  </section>}
+    {bookButton(s)}
+   </div>):<p className="price-empty">Ничего не нашли. Попробуйте другое слово или <button className="inline-link" onClick={()=>requestLead('client','Помочь выбрать услугу')}>оставьте заявку</button> — подберём процедуру.</p>}</div>
+   <p className="fine">Цены — ориентиры для демонстрации. Скрытых доплат нет: итоговую стоимость и длительность мастер называет до начала процедуры.</p>
+  </section>
+
+  <section className="section offers" aria-labelledby="offers-title">
+   <div className="section-head"><div><div className="eyebrow">КОМПЛЕКСЫ И СПЕЦПРЕДЛОЖЕНИЯ</div><h2 id="offers-title">Выгоднее <em>вместе</em></h2></div><p>Несколько процедур за один визит и предложения студии.</p></div>
+   {offers.length?<div className="offer-grid">{offers.map(s=><article className="offer-card" key={s.id}>
+    {s.image&&<button className="offer-photo" onClick={()=>openPhoto(s.image,s.name)} aria-label={'Фото: '+s.name}><img src={s.image} alt="" loading="lazy"/></button>}
+    <div><span className="price-cat">{s.category}</span><h3>{s.name}</h3><p>{s.description}</p></div>
+    <div className="offer-foot"><span className="price-value">{money(s.price)}</span><span className="price-duration">{duration(s)}</span>{bookButton(s)}</div>
+   </article>)}</div>:<div className="offer-empty"><h3>Комплексы и акции скоро появятся здесь</h3><p>О действующих предложениях расскажет администратор.</p>{writeUs}</div>}
+  </section>
+
+  <section className="section lead body-lead" id="body" aria-labelledby="body-title">
+   <div className="lead-copy"><div className="eyebrow">АППАРАТНАЯ КОРРЕКЦИЯ ФИГУРЫ</div><h2 id="body-title">Коррекция фигуры<br/><em>по заявке</em></h2><p>Оставьте заявку — администратор перезвонит, расскажет о процедурах и подберёт удобное время для консультации.</p><ul className="body-points"><li>Консультация перед началом курса</li><li>Программу и количество процедур подбираем индивидуально</li><li>Стоимость — до первой процедуры, без скрытых доплат</li></ul></div>
+   <LeadForm catalog={catalog} loadError={loadError} type="body" topics={bodyTopics} preset={presetFor('body')} title="Заявка на коррекцию фигуры" caption="Перезвоним в рабочее время студии" submitLabel="Жду звонка" commentHint="Какой результат хотите получить, удобное время для звонка"/>
+  </section>
+  </>}
 
   {page==='booking'&&<>
   <Booking catalog={catalog} selected={selected} setSelected={setSelected} loadError={loadError}/>
 
   <section className="section lead" id="lead" aria-labelledby="lead-title">
-   <div className="lead-copy"><div className="eyebrow">ПОДБЕРЁМ ПРОЦЕДУРУ</div><h2 id="lead-title">Не знаете,<br/><em>что выбрать?</em></h2><p>Оставьте заявку — администратор перезвонит, поможет подобрать процедуру и мастера и предложит удобное время.</p><div className="lead-contacts"><a href={phone.href}>{phone.label}</a>{socials.map(([n,u])=><a key={n} href={u} target="_blank" rel="noopener noreferrer">{n} ↗</a>)}</div></div>
-   <LeadForm catalog={catalog} loadError={loadError} type="client" topics={clientTopics} title="Заявка на консультацию" caption="Ответим в рабочее время студии" submitLabel="Жду звонка"/>
+   <div className="lead-copy"><div className="eyebrow">ПОДБЕРЁМ ПРОЦЕДУРУ</div><h2 id="lead-title">Не знаете,<br/><em>что выбрать?</em></h2><p>Оставьте заявку — администратор перезвонит, поможет подобрать процедуру и мастера и предложит удобное время. Также можно спросить о подарочном сертификате.</p>{writeUs}</div>
+   <LeadForm catalog={catalog} loadError={loadError} type="client" topics={clientTopics} preset={presetFor('client')} title="Заявка на консультацию" caption="Ответим в рабочее время студии" submitLabel="Жду звонка"/>
   </section>
   </>}
+
+  {page==='reviews'&&<section className="reviews section" id="reviews" aria-labelledby="reviews-title">
+   <div className="review-story"><div className="eyebrow">ОТЗЫВЫ</div><h2 id="reviews-title">Знакомство<br/><em>через впечатления.</em></h2><p>Отзывы помогают почувствовать атмосферу студии ещё до первого визита. Здесь — виджет карточки «Эмблики» на Яндекс Картах: новые отзывы появляются в нём сами.</p><div className="review-links"><a href={maps+'reviews/'} target="_blank" rel="noopener noreferrer" className="text-link">Открыть все отзывы <Arrow/></a><a href={maps+'reviews/'} target="_blank" rel="noopener noreferrer" className="text-link">Оставить отзыв на Яндекс Картах <Arrow/></a></div></div>
+   <div className="review-widget">{external==='accepted'?<iframe src="https://yandex.ru/maps-reviews-widget/145016511707?comments" title="Отзывы о студии Эмблика на Яндекс Картах" loading="lazy" referrerPolicy="strict-origin-when-cross-origin"/>:<div className="review-placeholder"><span className="review-symbol">“</span><h3>Гости — о студии</h3><p>Чтобы показать актуальные отзывы, нужно загрузить виджет Яндекса. Сервис получит технические данные вашего браузера.</p><Button className="button" label="Загрузить отзывы Яндекса" onClick={()=>allow('accepted')}/></div>}</div>
+  </section>}
 
   {page==='about'&&<>
   <section className="section about" id="about" aria-labelledby="about-title">
    <div className="about-photos"><img className="about-a" src="/assets/studio.jpg" alt="Зал студии Эмблика" loading="lazy"/><img className="about-b" src="/assets/room.jpg" alt="Кабинет ухода за лицом" loading="lazy"/></div>
    <div className="about-copy">
-    <div className="eyebrow">О СТУДИИ</div>
+    <div className="eyebrow">О НАС</div>
     <h2 id="about-title">Место, где можно<br/><em>выдохнуть.</em></h2>
     <p>«Эмблика» — студия красоты в Бежицком районе Брянска. Светлые залы, зелень и спокойный ритм — здесь не нужно торопиться, а можно просто побыть немного для себя.</p>
     <p>Мы за естественную красоту, аккуратную работу и честный разговор о результате. Приходите за привычным уходом или начните с небольшой перемены.</p>
@@ -215,28 +279,11 @@ function App(){
 
   <section className="section works" id="works" aria-labelledby="works-title">
    <div className="section-head"><div><div className="eyebrow">РАБОТЫ И ПРОСТРАНСТВО</div><h2 id="works-title">Детали, которые<br/><em>хочется рассмотреть.</em></h2></div><p>Работы мастеров и интерьер студии.</p></div>
-   <div className="gallery">{photos.map(([file,title,size])=><button className={'gallery-item '+size} key={file} onClick={()=>setGallery({file,title})}><img src={'/assets/'+file+'.jpg'} alt={title} loading="lazy"/><span>{title}</span></button>)}</div>
+   <div className="gallery">{photos.map(([file,title,size])=><button className={'gallery-item '+size} key={file} onClick={()=>openPhoto('/assets/'+file+'.jpg',title)}><img src={'/assets/'+file+'.jpg'} alt={title} loading="lazy"/><span>{title}</span></button>)}</div>
   </section>
   </>}
 
-  {page==='training'&&<section className="training" id="training" aria-labelledby="training-title">
-   <div className="section training-inner">
-    <div className="training-head">
-     <div className="eyebrow">ОБУЧЕНИЕ НА БАЗЕ СТУДИИ</div>
-     <h2 id="training-title">Учитесь там, где<br/><em>работают мастера.</em></h2>
-     <p>Занятия проходят в пространстве «Эмблики» — на тех же рабочих местах, где мастера принимают гостей. Подойдёт тем, кто начинает в профессии, и мастерам, которые хотят освоить новое направление.</p>
-    </div>
-    <div className="course-grid">{courses.map(c=><article className="course-card" key={c.title}><img src={'/assets/'+c.image+'.jpg'} alt="" loading="lazy"/><div><h3>{c.title}</h3><p>{c.text}</p><span>Программа, даты и стоимость — по запросу</span></div></article>)}</div>
-    <div className="training-bottom">
-     <div className="steps"><h3>Как попасть на обучение</h3><ol>
-      <li><strong>Заявка</strong><span>Выберите направление и оставьте контакты.</span></li>
-      <li><strong>Консультация</strong><span>Администратор расскажет о программе, датах и стоимости.</span></li>
-      <li><strong>Занятия в студии</strong><span>Теория и практика на рабочих местах мастеров.</span></li>
-     </ol><p className="fine">Программы, расписание групп и документы об окончании уточняются у студии. Информация появится здесь после согласования.</p></div>
-     <LeadForm catalog={catalog} loadError={loadError} type="training" topics={trainingTopics} title="Заявка на обучение" caption="Перезвоним и расскажем о ближайших датах" submitLabel="Отправить заявку" dark/>
-    </div>
-   </div>
-  </section>}
+  {page==='training'&&<Training catalog={catalog} loadError={loadError} preset={presetFor('training')} pick={topic=>requestLead('training',topic)}/>}
 
   {page==='contacts'&&<>
   <section className="section contacts" id="contacts" aria-labelledby="contacts-title">
@@ -246,9 +293,9 @@ function App(){
      <div><dt>Адрес</dt><dd>Брянск, ул. Брянской Пролетарской Дивизии, 30А</dd></div>
      <div><dt>Как добраться</dt><dd>Бежицкий район, ближайшая остановка — «Спортманеж»</dd></div>
      <div><dt>Часы работы</dt><dd>{hours}, по предварительной записи</dd></div>
-     <div><dt>Телефон</dt><dd><a href={phone.href}>{phone.label}</a></dd></div>
+     <div><dt>Телефоны</dt><dd>{phones.map(p=><a key={p.href} href={p.href}>{p.label}</a>)}</dd></div>
+     <div><dt>Написать нам</dt><dd>{messengers.map(([n,u,note])=><a key={n} href={u} target="_blank" rel="noopener noreferrer">{n}{note&&<small> — {note}</small>}</a>)}</dd></div>
     </dl>
-    <div className="socials">{socials.map(([n,u])=><a key={n} href={u} target="_blank" rel="noopener noreferrer">{n}</a>)}</div>
     <div className="contact-actions"><Button className="button" label="Построить маршрут" href={maps} target="_blank" rel="noopener noreferrer" endContent={<Arrow/>}/><a className="button ghost" href={phone.href}>Позвонить</a></div>
    </div>
    <div className="map-box">{external==='accepted'?<iframe src={mapWidget} title="Студия Эмблика на Яндекс Картах" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/>:<div className="map-placeholder"><span className="pin" aria-hidden="true">⌖</span><h3>Пролетарской<br/>Дивизии, <em>30А</em></h3><p>Карта загружается с Яндекса после вашего разрешения.</p><div className="contact-actions"><Button className="button" label="Показать карту" onClick={()=>allow('accepted')}/><a className="text-link" href={maps} target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах ↗</a></div></div>}</div>
@@ -259,14 +306,14 @@ function App(){
  </main>
 
  <footer className="footer">
-  <div className="footer-brand"><a className="logo" href="#/">эмблика<span>СТУДИЯ КРАСОТЫ</span></a><p>Брянск, ул. Брянской Пролетарской Дивизии, 30А<br/>{hours} · <a href={phone.href}>{phone.label}</a></p></div>
+  <div className="footer-brand"><a className="logo" href="#/">эмблика<span>СТУДИЯ КРАСОТЫ</span></a><p>Брянск, ул. Брянской Пролетарской Дивизии, 30А<br/>{hours}<br/>{phones.map((p,i)=><React.Fragment key={p.href}>{i>0&&' · '}<a href={p.href}>{p.label}</a></React.Fragment>)}</p></div>
   <nav className="footer-nav" aria-label="Разделы">{pages.map(navLink)}</nav>
   <div className="footer-links">{socials.map(([n,u])=><a key={n} href={u} target="_blank" rel="noopener noreferrer">{n}</a>)}<a href="/privacy.html">Политика конфиденциальности</a><a href="/consent.html">Согласие на обработку данных</a><a href="/rules.html">Правила записи</a><button className="footer-settings" onClick={()=>setCookieOpen(true)}>Настройки внешних сервисов</button><a href="/admin/">Кабинет студии</a></div>
   <p className="footer-copy">© Эмблика, 2026 · <span>Тестовый сайт для презентации</span></p>
  </footer>
- <div className="mobile-book"><a href={href('prices')}>Прайс</a><a href={booking}>Записаться <Arrow/></a></div>
+ <div className="mobile-book"><a href={href('services')}>Услуги</a><a href={booking}>Записаться <Arrow/></a></div>
  {cookieOpen&&<aside className="cookie-banner" aria-label="Внешние сервисы"><div><strong>Отзывы и карта — из Яндекса</strong><p>Разрешите загрузку виджетов Яндекс Карт с отзывами и схемой проезда. Без разрешения сайт, прайс и запись продолжат работать. <a href="/privacy.html">Подробнее</a></p></div><div><button onClick={()=>allow('accepted')}>Принять</button><button onClick={()=>allow('declined')}>Отклонить</button></div></aside>}
- {gallery&&<dialog id="photo-dialog" onCancel={()=>setGallery(null)} onClick={e=>{if(e.target===e.currentTarget)setGallery(null);}}><button autoFocus onClick={()=>setGallery(null)} aria-label="Закрыть фотографию">Закрыть ×</button><img src={'/assets/'+gallery.file+'.jpg'} alt={gallery.title}/><p>{gallery.title}</p></dialog>}
+ {gallery&&<dialog id="photo-dialog" onCancel={()=>setGallery(null)} onClick={e=>{if(e.target===e.currentTarget)setGallery(null);}}><button autoFocus onClick={()=>setGallery(null)} aria-label="Закрыть фотографию">Закрыть ×</button><img src={gallery.src} alt={gallery.title}/><p>{gallery.title}</p></dialog>}
  </>;
 }
 createRoot(document.getElementById('root')).render(<Theme theme={neutralTheme} mode="light">{location.pathname.startsWith('/admin')?<Admin/>:<App/>}</Theme>);

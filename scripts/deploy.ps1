@@ -37,7 +37,7 @@ ls -la ~/backups | tail -n 3
 
  Step 'Передача архива'
  if(Test-Path release.tar.gz){Remove-Item release.tar.gz}
- tar -czf release.tar.gz -C dist .;Check 'создание архива'
+ tar -czf release.tar.gz --exclude=./uploads -C dist .;Check 'создание архива'   # фото услуг живут только на сервере
  scp release.tar.gz "${Host_}:/home/c/cc250576/emblema-release.tar.gz";Check 'scp'
 
  Step 'Распаковка и права'
