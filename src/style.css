@@ -77,6 +77,11 @@ h1{font-size:clamp(56px,6vw,96px);line-height:.96;letter-spacing:-.035em;margin:
 .hero-badge{position:absolute;right:20px;top:40px;background:var(--card);border-radius:16px;padding:16px 20px 16px 40px;font-size:13px;font-weight:600;box-shadow:var(--shadow);max-width:270px;line-height:1.4}
 .hero-badge small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:4px}
 .hero-badge .dot{position:absolute;left:18px;top:21px;width:9px;height:9px;border-radius:50%;background:#4f9a6c;box-shadow:0 0 0 4px #4f9a6c30}
+/* Первый экран с общим фото команды: горизонтальный кадр целиком, без обрезки лиц по краям */
+.hero-visual.team{min-height:0;align-self:center}
+.hero-visual.team .hero-main{position:relative;inset:auto;aspect-ratio:853/582;border-radius:28px;box-shadow:var(--shadow)}
+.hero-visual.team .hero-main img{object-position:50% 20%}
+.hero-visual.team .hero-badge{top:auto;right:24px;bottom:-26px}
 
 /* Направления */
 .directions{padding-top:40px}
@@ -338,6 +343,9 @@ input::placeholder,textarea::placeholder{color:#7d877f}
  .hero-inset{width:40%;bottom:24px;border-width:6px}
  .hero-badge{right:10px;top:auto;bottom:-18px;max-width:230px;font-size:12px;padding:12px 14px 12px 34px}
  .hero-badge .dot{left:14px;top:17px}
+ .hero-visual.team{min-height:0;margin-bottom:22px}
+ .hero-visual.team .hero-main{border-radius:20px}
+ .hero-visual.team .hero-badge{position:relative;display:block;right:auto;bottom:auto;max-width:none;margin-top:12px}
  .directions{padding-top:40px}
  .direction-grid{grid-template-columns:1fr 1fr;gap:12px}
  .direction-body{padding:14px 14px 14px;gap:6px}

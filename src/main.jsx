@@ -187,9 +187,8 @@ function App(){
     <div className="hero-actions"><Button className="button" label="Записаться онлайн" href={booking} endContent={<Arrow/>}/><a className="button ghost" href={href('services')}>Смотреть услуги и цены</a></div>
     <ul className="hero-facts"><li><strong>5</strong><span>направлений<br/>в одной студии</span></li><li><strong>3</strong><span>мастера<br/>в команде</span></li><li><strong>10–20</strong><span>ежедневно<br/>по записи</span></li></ul>
    </div>
-   <div className="hero-visual">
-    <div className="hero-main"><img src="/assets/detail.jpg" alt="Рабочее место мастера в студии Эмблика: зеркало и зелёные панно" fetchPriority="high"/></div>
-    <div className="hero-inset"><img src="/assets/work-1.jpg" alt="Маникюр в натуральном оттенке" loading="lazy"/></div>
+   <div className="hero-visual team">
+    <div className="hero-main"><img src="/assets/team.jpg" alt="Команда студии красоты «Эмблика»" width="853" height="582" fetchPriority="high"/></div>
     <a className="hero-badge" href={href('contacts')}><span className="dot"/>{hours}<small>ул. Брянской Пролетарской Дивизии, 30А</small></a>
    </div>
   </section>
