@@ -77,11 +77,13 @@ h1{font-size:clamp(56px,6vw,96px);line-height:.96;letter-spacing:-.035em;margin:
 .hero-badge{position:absolute;right:20px;top:40px;background:var(--card);border-radius:16px;padding:16px 20px 16px 40px;font-size:13px;font-weight:600;box-shadow:var(--shadow);max-width:270px;line-height:1.4}
 .hero-badge small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:4px}
 .hero-badge .dot{position:absolute;left:18px;top:21px;width:9px;height:9px;border-radius:50%;background:#4f9a6c;box-shadow:0 0 0 4px #4f9a6c30}
-/* Первый экран с общим фото команды: горизонтальный кадр целиком, без обрезки лиц по краям */
+/* Первый экран с фото команды. Высота рамки задаётся пропорциями кадра, а не min-height:
+   иначе при другой ширине экрана обрезались бы крайние мастера. */
 .hero-visual.team{min-height:0;align-self:center}
-.hero-visual.team .hero-main{position:relative;inset:auto;aspect-ratio:853/582;border-radius:28px;box-shadow:var(--shadow)}
-.hero-visual.team .hero-main img{object-position:50% 20%}
-.hero-visual.team .hero-badge{top:auto;right:24px;bottom:-26px}
+.hero-visual.team .hero-main{position:relative;inset:auto;margin-left:12%;aspect-ratio:853/948}
+.hero-visual.team .hero-main img{object-position:50% 50%}
+/* Маленькое фото опущено в угол, чтобы не закрывать руки и лицо мастера слева */
+.hero-visual.team .hero-inset{width:27%;bottom:-26px}
 
 /* Направления */
 .directions{padding-top:40px}
@@ -181,7 +183,7 @@ h1{font-size:clamp(56px,6vw,96px);line-height:.96;letter-spacing:-.035em;margin:
 .values p{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.6}
 
 /* Мастера */
-.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px}
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
 .master-photo{aspect-ratio:4/4.6;overflow:hidden;border-radius:180px 180px 16px 16px;background:var(--sage)}
 .master-photo img{object-position:center 25%;transition:transform .4s}
 .master-card:hover img{transform:scale(1.03)}
@@ -291,6 +293,7 @@ input::placeholder,textarea::placeholder{color:#7d877f}
  .header{gap:18px}.header-phone{display:none}.nav{gap:18px}
  .hero{gap:4%}.hero-visual{min-height:560px}
  .direction-grid{grid-template-columns:repeat(3,1fr)}
+ .team-grid{grid-template-columns:1fr 1fr;gap:34px}
  .price-table.with-photos .price-row{grid-template-columns:64px 1fr 90px 130px 130px}
  .perks,.offer-grid{grid-template-columns:1fr 1fr}
  .explore-grid{grid-template-columns:1fr 1fr}
@@ -300,6 +303,17 @@ input::placeholder,textarea::placeholder{color:#7d877f}
  .footer{grid-template-columns:1fr 1fr}.footer-links{grid-column:1/-1}
 }
 @media(max-width:900px){
+ /* Шесть вкладок с длинными названиями не помещаются в строку: меню сворачивается в кнопку */
+ .header>.button{margin-left:auto}
+ .menu-toggle{display:flex;flex-direction:column;justify-content:center;gap:6px;border:1px solid var(--border);background:var(--card);border-radius:50%;width:42px;height:42px;padding:0 11px}
+ .menu-toggle span{display:block;height:1.5px;background:var(--ink);transition:transform .2s}
+ .menu-toggle[aria-expanded=true] span:first-child{transform:translateY(3.75px) rotate(45deg)}
+ .menu-toggle[aria-expanded=true] span:last-child{transform:translateY(-3.75px) rotate(-45deg)}
+ .nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--paper);padding:12px 20px 20px;border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
+ .nav.open{display:flex;flex-direction:column;gap:0}
+ .nav a{padding:14px 0;border-bottom:1px solid var(--border);font-size:16px}
+ .nav a:after{display:none}
+ .hero-visual.team .hero-badge{top:14px}
  .about,.training-bottom,.lead,.contacts,.reviews{grid-template-columns:1fr;gap:44px}
  .about-photos{min-height:520px}
  .course-grid{grid-template-columns:1fr 1fr}
@@ -316,15 +330,7 @@ input::placeholder,textarea::placeholder{color:#7d877f}
  .demo-top{padding-inline:20px;font-size:11px}
  .header{min-height:68px;padding:10px 20px;gap:12px}
  .logo{font-size:32px}.logo span{font-size:7px;margin-top:8px}
- .header>.button{margin-left:auto;min-height:38px!important;padding-inline:14px!important;font-size:12px!important}
- .menu-toggle{display:flex;flex-direction:column;justify-content:center;gap:6px;border:1px solid var(--border);background:var(--card);border-radius:50%;width:42px;height:42px;padding:0 11px}
- .menu-toggle span{display:block;height:1.5px;background:var(--ink);transition:transform .2s}
- .menu-toggle[aria-expanded=true] span:first-child{transform:translateY(3.75px) rotate(45deg)}
- .menu-toggle[aria-expanded=true] span:last-child{transform:translateY(-3.75px) rotate(-45deg)}
- .nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--paper);padding:12px 20px 20px;border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
- .nav.open{display:flex;flex-direction:column;gap:0}
- .nav a{padding:14px 0;border-bottom:1px solid var(--border);font-size:16px}
- .nav a:after{display:none}
+ .header>.button{min-height:38px!important;padding-inline:14px!important;font-size:12px!important}
  .section{padding:60px 20px}
  .section-head{display:block;margin-bottom:26px}
  .section-head>p{margin-top:14px;font-size:15px}
@@ -344,8 +350,10 @@ input::placeholder,textarea::placeholder{color:#7d877f}
  .hero-badge{right:10px;top:auto;bottom:-18px;max-width:230px;font-size:12px;padding:12px 14px 12px 34px}
  .hero-badge .dot{left:14px;top:17px}
  .hero-visual.team{min-height:0;margin-bottom:22px}
- .hero-visual.team .hero-main{border-radius:20px}
- .hero-visual.team .hero-badge{position:relative;display:block;right:auto;bottom:auto;max-width:none;margin-top:12px}
+ .hero-visual.team .hero-main{margin-left:8%}
+ .hero-visual.team .hero-inset{width:30%;bottom:-18px}
+ /* На телефоне плашка стоит вверху, на свободной стене, а не поверх мастеров */
+ .hero-visual.team .hero-badge{top:10px;right:0;bottom:auto;max-width:240px}
  .directions{padding-top:40px}
  .direction-grid{grid-template-columns:1fr 1fr;gap:12px}
  .direction-body{padding:14px 14px 14px;gap:6px}

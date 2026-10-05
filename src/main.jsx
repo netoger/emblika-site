@@ -65,6 +65,7 @@ const values=[
 ];
 const team=[
  {id:1,name:'Полина',role:'Косметолог, лешмейкер, бровист',image:'polina',text:'Косметолог с медицинским образованием: подбирает процедуры и домашний уход, делает массаж лица. В наращивании ресниц — четыре года, работает и в LED-технике.',category:'Эстетическая косметология'},
+ {id:4,name:'Светлана',role:'Мастер по наращиванию и ламинированию ресниц',image:'svetlana',text:'Наращивание и ламинирование ресниц. Подберёт изгиб, длину и объём под ваш взгляд — от естественного эффекта до выразительного.',category:'Ресницы и брови'},
  {id:2,name:'Анна',role:'Мастер маникюра и педикюра',image:'anna',text:'Уход за ногтями, покрытие и наращивание. Сдержанный нюд, яркий цвет или новая форма — начните с ваших пожеланий.',category:'Ногти'},
  {id:3,name:'Мария',role:'Парикмахер',image:'maria',text:'Женские, мужские и детские стрижки, окрашивание и завивка. Обсудите длину, оттенок и то, как вы привыкли укладывать волосы.',category:'Волосы'}
 ];
@@ -185,10 +186,11 @@ function App(){
     <h1>Красота,<br/>которая <em>растёт<br/>из заботы.</em></h1>
     <p>Ногти, ресницы и брови, косметология, волосы и коррекция фигуры — в одной спокойной студии. Выберите услугу, посмотрите цену и запишитесь онлайн за пару минут.</p>
     <div className="hero-actions"><Button className="button" label="Записаться онлайн" href={booking} endContent={<Arrow/>}/><a className="button ghost" href={href('services')}>Смотреть услуги и цены</a></div>
-    <ul className="hero-facts"><li><strong>5</strong><span>направлений<br/>в одной студии</span></li><li><strong>3</strong><span>мастера<br/>в команде</span></li><li><strong>10–20</strong><span>ежедневно<br/>по записи</span></li></ul>
+    <ul className="hero-facts"><li><strong>5</strong><span>направлений<br/>в одной студии</span></li><li><strong>4</strong><span>мастера<br/>в команде</span></li><li><strong>10–20</strong><span>ежедневно<br/>по записи</span></li></ul>
    </div>
    <div className="hero-visual team">
-    <div className="hero-main"><img src="/assets/team.jpg" alt="Команда студии красоты «Эмблика»" width="853" height="582" fetchPriority="high"/></div>
+    <div className="hero-main"><img src="/assets/team.jpg" alt="Четыре мастера студии красоты «Эмблика»" width="853" height="948" fetchPriority="high"/></div>
+    <div className="hero-inset"><img src="/assets/work-1.jpg" alt="Маникюр в натуральном оттенке" loading="lazy"/></div>
     <a className="hero-badge" href={href('contacts')}><span className="dot"/>{hours}<small>ул. Брянской Пролетарской Дивизии, 30А</small></a>
    </div>
   </section>
@@ -274,7 +276,7 @@ function App(){
   </section>
 
   <section className="section team" id="team" aria-labelledby="team-title">
-   <div className="section-head"><div><div className="eyebrow">МАСТЕРА</div><h2 id="team-title">Красота начинается<br/><em>с доверия.</em></h2></div><p>Три мастера. Разные направления.<br/>Одна студия рядом с вами.</p></div>
+   <div className="section-head"><div><div className="eyebrow">МАСТЕРА</div><h2 id="team-title">Красота начинается<br/><em>с доверия.</em></h2></div><p>Четыре мастера. Разные направления.<br/>Одна студия рядом с вами.</p></div>
    <div className="team-grid">{team.map(m=><article className="master-card" key={m.id}>
     <div className="master-photo"><img src={'/assets/'+m.image+'.jpg'} alt={m.name+' — '+m.role} loading="lazy"/></div>
     <div className="master-name"><h3>{m.name}</h3><button aria-label={'Услуги мастера '+m.name} onClick={()=>showPrices(m.category)}>↗</button></div>

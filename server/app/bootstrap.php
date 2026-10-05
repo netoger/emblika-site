@@ -33,7 +33,7 @@ const NEW_SERVICES = [
 ];
 // Изменения схемы по номеру в PRAGMA user_version. Пока install.php не создал таблицы, миграции ждут:
 // установщик вызовет их сам после начального наполнения.
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 // Демонстрационные услуги первой версии и заглушки новых процедур: версия 2 заменяет их прайсом студии.
 const DEMO_SERVICES = ['Маникюр с покрытием','Наращивание ногтей','Экспресс-педикюр','Наращивание ресниц 2,5D','Ламинирование ресниц','Оформление бровей','Уход за лицом','Женская стрижка','Мужская стрижка','Окрашивание волос','Чистка лица','Пилинг','Радиочастотный (RF) лифтинг лица','Аппаратная коррекция фигуры'];
 function migrate(PDO $db): void {
@@ -70,6 +70,28 @@ function migrate(PDO $db): void {
             $add = $db->prepare('INSERT INTO services(name,category,description,price,price_from,duration,masters,mode,image) VALUES(?,?,?,?,?,?,?,?,?)');
             foreach (require __DIR__.'/catalog.php' as $s) { $exists->execute([$s[0]]); if (!$exists->fetchColumn()) $add->execute([$s[0],$s[1],$s[2],$s[3],$s[4],$s[5],$s[6],$s[7],$s[8]?:null]); }
             $db->exec('PRAGMA user_version=2');
+        }
+        if ($version < 3) {
+            // Версия 3 (06.10.2026): мастер Светлана — наращивание и ламинирование ресниц.
+            $find = $db->prepare('SELECT id FROM masters WHERE name=?');
+            $find->execute(['Светлана']);
+            $id = (int)$find->fetchColumn();
+            if (!$id) {
+                $db->prepare('INSERT INTO masters(name,role,image) VALUES(?,?,?)')->execute(['Светлана', 'Мастер по наращиванию и ламинированию ресниц', '/assets/svetlana.jpg']);
+                $id = (int)$db->lastInsertId();
+            }
+            // Её услуги — ресницы без бровей; комплексы остаются за прежним мастером, их меняют в кабинете.
+            $save = $db->prepare('UPDATE services SET masters=? WHERE id=?');
+            foreach ($db->query("SELECT id,name,masters FROM services WHERE category='Ресницы и брови'")->fetchAll(PDO::FETCH_ASSOC) as $s) {
+                if (mb_stripos($s['name'], 'бров') !== false || mb_stripos($s['name'], 'волоск') !== false) continue;
+                $masters = json_decode($s['masters'], true) ?: [];
+                if (in_array($id, $masters, true)) continue;
+                $masters[] = $id; sort($masters);
+                $save->execute([json_encode($masters), $s['id']]);
+            }
+            // Демонстрационные смены — те же, что у мастера с тем же направлением (Полина, id 1).
+            $db->prepare('INSERT OR IGNORE INTO shifts(master_id,date,start_time,end_time) SELECT ?,date,start_time,end_time FROM shifts WHERE master_id=1 AND date>=?')->execute([$id, date('Y-m-d')]);
+            $db->exec('PRAGMA user_version=3');
         }
         $db->exec('COMMIT');
     } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }

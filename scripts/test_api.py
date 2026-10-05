@@ -68,12 +68,20 @@ check(names['Балаяж']['price_from']==1,'Цена «от» перенесе
 check(any(s['category']=='Комплексы' for s in catalog['services']) and any(s['category']=='Спецпредложения' for s in catalog['services']),'Комплексы и спецпредложения заполнены')
 check(all(s['mode']=='request' for s in catalog['services'] if s['category']=='Коррекция фигуры'),'Коррекция фигуры — по заявке')
 check(not any(s['category']=='Уход за лицом' for s in catalog['services']),'Раздел «Уход за лицом» переименован в косметологию')
+svetlana=next((m for m in catalog['masters'] if m['name']=='Светлана'),None)
+check(len(catalog['masters'])==4 and svetlana and svetlana['role']=='Мастер по наращиванию и ламинированию ресниц','Мастер Светлана добавлена')
+lash=names['Наращивание ресниц 2D (без снятия нарощенных ресниц)']
+check(json.loads(lash['masters'])==[1,svetlana['id']] and json.loads(names['Ламинирование верхних ресниц + окрашивание']['masters'])==[1,svetlana['id']],'Ресницы — у Полины и Светланы')
+check(names['Коррекция бровей (женская)']['masters']=='[1]' and names['Ботокс для бровей/ресниц']['masters']=='[1]' and names['Лами под ключ']['masters']=='[1]','Брови и комплексы остались за Полиной')
+check(names['Стрижка каре']['masters']=='[3]' and names['Маникюр женский']['masters']=='[2]','Услуги других мастеров не изменились')
 body_service=names['Бесплатная консультация по аппаратной коррекции фигуры']
 day=(date.fromisoformat(catalog['today'])+timedelta(days=2)).isoformat()
 master=json.loads(service['masters'])[0]
 times=guest.call(f'slots&service={service["id"]}&master={master}&date={day}')[1]['times']
 check(bool(times),'Получены свободные окна')
 check(guest.call(f'slots&service={body_service["id"]}&master={master}&date={day}')[1]['times']==[],'Услуга «только заявка» не предлагает время')
+check(bool(guest.call(f'slots&service={lash["id"]}&master={svetlana["id"]}&date={day}')[1]['times']),'У Светланы есть свободные окна')
+check(guest.call(f'slots&service={names["Стрижка каре"]["id"]}&master={svetlana["id"]}&date={day}')[1]['times']==[],'Светлану нельзя выбрать на чужую услугу')
 payload={'service':service['id'],'master':master,'date':day,'time':times[0],'name':'Тест API','phone':'70000000000','consent':True,'demoConsent':True,'requestId':str(uuid.uuid4())}
 check(guest.call('book',{**payload,'consent':False})[0]==400,'Сервер проверяет согласие')
 check(guest.call('book',{**payload,'phone':'123'})[0]==400,'Сервер проверяет телефон')
